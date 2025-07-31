@@ -27,24 +27,23 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <Header />
       
       {/* Main Content */}
-      <main className="relative pt-16 pb-20">
+      <main className="pt-20 pb-8 px-4">
         {loading ? (
-          <div className="flex items-center justify-center h-screen">
+          <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center space-y-4">
               <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-gray-600 text-sm">Loading clips...</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">Loading clips...</p>
             </div>
           </div>
         ) : (
           <VideoFeed videos={videos} />
         )}
       </main>
-
     </div>
   );
 }

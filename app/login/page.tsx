@@ -35,22 +35,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Camera className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Clipzy</h1>
-          <p className="text-gray-600">Sign in to continue sharing your clips</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Clipzy</h1>
+          <p className="text-gray-600 dark:text-gray-300">Sign in to continue sharing your clips</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
+              <label htmlFor="email" className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -61,14 +61,14 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl text-gray-900 placeholder-gray-500 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+              <label htmlFor="password" className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
                 Password
               </label>
               <div className="relative">
@@ -79,13 +79,13 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-12 py-3 bg-gray-50 rounded-xl text-gray-900 placeholder-gray-500 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -101,9 +101,9 @@ export default function Login() {
             </button>
 
             <div className="text-center">
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="text-purple-600 font-semibold hover:underline">
+                <Link href="/register" className="text-purple-600 dark:text-purple-400 font-semibold hover:underline">
                   Sign up
                 </Link>
               </p>
