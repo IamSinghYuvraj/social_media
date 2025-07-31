@@ -1,6 +1,6 @@
 import { IVideo } from "@/models/Video";
 import VideoComponent from "./VideoComponent";
-import { Sparkles, TrendingUp, Clock, Fire } from "lucide-react";
+import { Sparkles, TrendingUp, Clock, Siren as Fire } from "lucide-react";
 
 interface VideoFeedProps {
   videos: IVideo[];
