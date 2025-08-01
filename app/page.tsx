@@ -32,15 +32,15 @@ export default function Home() {
       <Header />
       
       {/* Hero Section */}
-      <div className="pt-24 pb-8">
-        <div className="max-w-7xl mx-auto px-6 text-center">
+      <div className="pt-24 pb-12">
+        <div className="max-w-6xl mx-auto px-6 text-center">
           <div className="relative">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
               <span className="gradient-text">Share Your</span>
               <br />
               <span className="text-gray-900 dark:text-white">Amazing Clips</span>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
               Join millions of creators sharing their best moments on the most vibrant video platform
             </p>
             
@@ -54,14 +54,13 @@ export default function Home() {
       
       {/* Main Content */}
       <main className="pb-16 px-6">
-        {loading ? (
-          <div className="max-w-7xl mx-auto">
-            {/* Loading Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+        <div className="max-w-7xl mx-auto">
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 md:gap-8">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-800/50">
+                <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-800/50 shadow-lg">
                   <div className="aspect-[9/16] skeleton"></div>
-                  <div className="p-6 space-y-4">
+                  <div className="p-4 md:p-6 space-y-3 md:space-y-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 skeleton rounded-full"></div>
                       <div className="flex-1 space-y-2">
@@ -77,10 +76,10 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          <VideoFeed videos={videos} />
-        )}
+          ) : (
+            <VideoFeed videos={videos} />
+          )}
+        </div>
       </main>
     </div>
   );
