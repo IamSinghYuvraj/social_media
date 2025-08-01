@@ -73,10 +73,10 @@ export default function VideoUploadForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
       {/* Video Upload Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Video</h3>
+      <div className="space-y-3 sm:space-y-4">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white text-crisp">Upload Video</h3>
         
         <FileUpload
           fileType="video"
@@ -85,18 +85,18 @@ export default function VideoUploadForm() {
         />
         
         {uploadProgress > 0 && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="mt-3 sm:mt-4">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                 Uploading... {uploadProgress}%
               </span>
               {uploadComplete && (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
               )}
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-gray-200/80 dark:bg-gray-700/80 rounded-full h-2 overflow-hidden backdrop-blur-sm">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out shadow-sm"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -106,16 +106,16 @@ export default function VideoUploadForm() {
 
       {/* Title Section */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 text-crisp">
           Title
         </label>
         <input
           type="text"
           placeholder="Enter video title..."
-          className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-2 transition-all duration-300 focus:outline-none focus:ring-0 ${
+          className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50/80 dark:bg-gray-800/60 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-2 transition-all duration-300 focus:outline-none focus:ring-0 backdrop-blur-sm shadow-sm focus:shadow-modern ${
             errors.title 
               ? "border-red-500 focus:border-red-500" 
-              : "border-gray-200 dark:border-gray-700 focus:border-purple-500"
+              : "border-gray-200/50 dark:border-gray-700/50 focus:border-purple-500"
           }`}
           {...register("title", { 
             required: "Title is required",
@@ -124,8 +124,8 @@ export default function VideoUploadForm() {
           })}
         />
         {errors.title && (
-          <div className="flex items-center space-x-2 text-red-500 text-sm">
-            <AlertCircle className="w-4 h-4" />
+          <div className="flex items-center space-x-1.5 sm:space-x-2 text-red-500 text-xs sm:text-sm">
+            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{errors.title.message}</span>
           </div>
         )}
@@ -133,16 +133,16 @@ export default function VideoUploadForm() {
 
       {/* Description Section */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 text-crisp">
           Description
         </label>
         <textarea
-          rows={3}
+          rows={4}
           placeholder="Describe your video..."
-          className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-2 transition-all duration-300 focus:outline-none focus:ring-0 resize-none ${
+          className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50/80 dark:bg-gray-800/60 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-2 transition-all duration-300 focus:outline-none focus:ring-0 resize-none backdrop-blur-sm shadow-sm focus:shadow-modern ${
             errors.description 
               ? "border-red-500 focus:border-red-500" 
-              : "border-gray-200 dark:border-gray-700 focus:border-purple-500"
+              : "border-gray-200/50 dark:border-gray-700/50 focus:border-purple-500"
           }`}
           {...register("description", { 
             required: "Description is required",
@@ -151,8 +151,8 @@ export default function VideoUploadForm() {
           })}
         />
         {errors.description && (
-          <div className="flex items-center space-x-2 text-red-500 text-sm">
-            <AlertCircle className="w-4 h-4" />
+          <div className="flex items-center space-x-1.5 sm:space-x-2 text-red-500 text-xs sm:text-sm">
+            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{errors.description.message}</span>
           </div>
         )}
@@ -162,27 +162,27 @@ export default function VideoUploadForm() {
       <button
         type="submit"
         disabled={loading || !uploadComplete}
-        className={`w-full py-3 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
+        className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-modern ${
           loading || !uploadComplete
-            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-[1.02] shadow-lg hover:shadow-xl"
+            ? "bg-gray-300/80 dark:bg-gray-700/80 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-[1.02] hover:shadow-modern-lg"
         }`}
       >
         {loading ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
             <span>Publishing...</span>
           </>
         ) : (
           <>
-            <Upload className="w-5 h-5" />
+            <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Publish Video</span>
           </>
         )}
       </button>
 
       {!uploadComplete && (
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
           Please upload a video before publishing
         </p>
       )}
