@@ -52,12 +52,12 @@ export default function Header() {
   };
 
   return (
-    <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+    <div className={`fixed top-0 left-1/2 -translate-x-1/2 z-50 max-w-7xl w-full transition-all duration-500  ${
       isScrolled 
         ? 'glass backdrop-blur-modern shadow-modern-lg border-b border-white/10 dark:border-gray-800/20' 
         : 'bg-white/60 dark:bg-gray-900/60 backdrop-blur-md'
     }`}>
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between content-stretch">
         {/* Logo */}
         <Link
           href="/"
@@ -79,7 +79,6 @@ export default function Header() {
             <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-300" />
             <input
               type="text"
-              placeholder="Search amazing clips..."
               className="w-full pl-9 sm:pl-12 pr-4 sm:pr-6 py-2.5 sm:py-3 bg-gray-50/80 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl text-sm sm:text-base text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200/30 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 focus:bg-white/90 dark:focus:bg-gray-800/80 transition-all duration-300 backdrop-blur-sm shadow-sm focus:shadow-modern"
             />
             <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
