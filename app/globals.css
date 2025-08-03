@@ -134,10 +134,130 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Remove scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Disable text selection for better mobile experience */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Custom animations for reels */
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-heart-beat {
+  animation: heartBeat 0.6s ease-in-out;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Touch feedback */
+.active\:scale-75:active {
+  transform: scale(0.75);
+}
+
+/* Better mobile touch targets */
+@media (pointer: coarse) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Hide elements during transitions */
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Smooth video transitions */
+video {
+  object-fit: cover;
+  background-color: #000;
+}
+
+/* Progress bar styling */
+.progress-bar {
+  background: linear-gradient(90deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+  border-radius: 2px;
+}
+
+/* Full-screen mobile optimization */
+@media screen and (max-width: 768px) {
+  body {
+    overflow: hidden;
+  }
+  
+  /* Hide address bar on mobile */
+  .mobile-fullscreen {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+}
+
+/* Backdrop blur fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .backdrop-blur-sm {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Safe area for mobile devices */
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent zoom on mobile inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px;
+  }
 }
