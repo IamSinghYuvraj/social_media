@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Video from "@/models/Video";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
     await connectToDatabase();
-    const videos = await Video.find({}).sort({ createdAt: -1 });
+    const videos = await Video.find({})
+      .sort({ createdAt: -1 })
+      .lean();
     return NextResponse.json(videos);
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -18,8 +22,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { title, description, videoUrl, thumbnailUrl } = body;
+    const { title, description, videoUrl, thumbnailUrl, captions = [] } = body;
 
     if (!title || !description || !videoUrl || !thumbnailUrl) {
       return NextResponse.json(
@@ -34,6 +46,11 @@ export async function POST(request: NextRequest) {
       description,
       videoUrl,
       thumbnailUrl,
+      userId: session.user.id,
+      userEmail: session.user.email,
+      likes: [],
+      comments: [],
+      captions,
     });
 
     await video.save();

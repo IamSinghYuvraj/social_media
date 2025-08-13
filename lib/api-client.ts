@@ -1,6 +1,6 @@
-import { IVideo } from "@/models/Video";
+import { IVideo, ICaption } from "@/models/Video";
 
-export type VideoFormData = Omit<IVideo, "_id">;
+export type VideoFormData = Omit<IVideo, "_id" | "userId" | "userEmail" | "likes" | "comments">;
 
 type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -41,10 +41,34 @@ class ApiClient {
     return this.fetch<IVideo>(`/videos/${id}`);
   }
 
+  async getUserVideos(userId: string) {
+    return this.fetch<IVideo[]>(`/videos/user/${userId}`);
+  }
   async createVideo(videoData: VideoFormData) {
     return this.fetch<IVideo>("/videos", {
       method: "POST",
       body: videoData,
+    });
+  }
+
+  async likeVideo(videoId: string) {
+    return this.fetch<IVideo>(`/videos/${videoId}`, {
+      method: "PUT",
+      body: { action: "like" },
+    });
+  }
+
+  async commentOnVideo(videoId: string, text: string) {
+    return this.fetch<IVideo>(`/videos/${videoId}`, {
+      method: "PUT",
+      body: { action: "comment", text },
+    });
+  }
+
+  async updateCaptions(videoId: string, captions: ICaption[]) {
+    return this.fetch<IVideo>(`/videos/${videoId}`, {
+      method: "PUT",
+      body: { action: "update_captions", captions },
     });
   }
 }

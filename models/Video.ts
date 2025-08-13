@@ -5,12 +5,31 @@ export const VIDEO_DIMENSIONS = {
     height: 1920,
 } as const;
 
+export interface IComment {
+    _id?: mongoose.Types.ObjectId;
+    userId: string;
+    userEmail: string;
+    text: string;
+    createdAt?: Date;
+}
+
+export interface ICaption {
+    text: string;
+    startTime: number;
+    endTime: number;
+}
+
 export interface IVideo {
     _id?: mongoose.Types.ObjectId;
     title : string;
     description: string;
     videoUrl: string;
     thumbnailUrl:  string;
+    userId: string;
+    userEmail: string;
+    likes: string[];
+    comments: IComment[];
+    captions: ICaption[];
     controls?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
@@ -21,11 +40,28 @@ export interface IVideo {
     }
 }
 
+const commentSchema = new Schema<IComment>({
+    userId: {type: String, required: true},
+    userEmail: {type: String, required: true},
+    text: {type: String, required: true, maxlength: 500},
+}, {timestamps: true});
+
+const captionSchema = new Schema<ICaption>({
+    text: {type: String, required: true},
+    startTime: {type: Number, required: true},
+    endTime: {type: Number, required: true},
+});
+
 const videoSchema = new Schema<IVideo>({
     title: {type: String, required: true},
     description: {type: String, required: true},
     videoUrl: {type: String, required: true},
     thumbnailUrl: {type: String, required: true},
+    userId: {type: String, required: true},
+    userEmail: {type: String, required: true},
+    likes: [{type: String}],
+    comments: [commentSchema],
+    captions: [captionSchema],
     controls: {type: Boolean, default: true},
     transformation: {
         height: {type: Number, default: VIDEO_DIMENSIONS.height},

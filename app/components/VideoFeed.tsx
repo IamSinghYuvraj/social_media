@@ -56,9 +56,10 @@ import VideoComponent from "./VideoComponent";
 
 interface VideoFeedProps {
   videos: IVideo[];
+  onVideoUpdate?: (updatedVideo: IVideo) => void;
 }
 
-export default function VideoFeed({ videos }: VideoFeedProps) {
+export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,7 +105,7 @@ export default function VideoFeed({ videos }: VideoFeedProps) {
           data-id={video._id?.toString()}
           className="snap-start h-screen flex justify-center items-center video-section"
         >
-          <VideoComponent video={video} />
+          <VideoComponent video={video} onVideoUpdate={onVideoUpdate} />
         </div>
       ))}
     </div>

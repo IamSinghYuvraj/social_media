@@ -34,6 +34,13 @@ export default function Home() {
     }
   }, [status]);
 
+  const handleVideoUpdate = (updatedVideo: IVideo) => {
+    setVideos(prevVideos =>
+      prevVideos.map(video =>
+        video._id?.toString() === updatedVideo._id?.toString() ? updatedVideo : video
+      )
+    );
+  };
   // Show authentication required screen
   if (status === "loading") {
     return (
@@ -190,7 +197,7 @@ export default function Home() {
       </Link>
 
       {/* Video Feed */}
-      <VideoFeed videos={videos} />
+      <VideoFeed videos={videos} onVideoUpdate={handleVideoUpdate} />
     </div>
   );
 }

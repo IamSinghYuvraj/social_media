@@ -156,6 +156,14 @@ export default function Header() {
                       <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">Create Clip</span>
                     </Link>
                     
+                    <Link
+                      href="/profile"
+                      className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-100/30 dark:hover:bg-gray-800/30 rounded-lg sm:rounded-xl transition-all duration-200 hover:scale-[1.02]"
+                    >
+                      <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300">My Profile</span>
+                    </Link>
+                    
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-red-50/80 dark:hover:bg-red-900/20 rounded-lg sm:rounded-xl transition-all duration-200 text-red-600 dark:text-red-400 hover:scale-[1.02]"
