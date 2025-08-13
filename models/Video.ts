@@ -27,9 +27,12 @@ export interface IVideo {
     thumbnailUrl:  string;
     userId: string;
     userEmail: string;
-    likes: string[];
-    comments: IComment[];
-    captions: ICaption[];
+      likes: string[];
+  comments: Array<{
+    userEmail: string; // Make sure this is also required in comments
+    text: string;
+    createdAt?: Date;
+  }>;captions: ICaption[];
     controls?: boolean;
     createdAt?: Date;
     updatedAt?: Date;

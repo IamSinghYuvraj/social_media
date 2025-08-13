@@ -26,7 +26,15 @@ interface VideoComponentProps {
 export default function VideoComponent({ video, onVideoUpdate }: VideoComponentProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [localVideo, setLocalVideo] = useState(video);
+  const [localVideo, setLocalVideo] = useState(() => ({
+    ...video,
+    likes: video.likes || [],
+    comments: video.comments || [],
+    userEmail: video.userEmail || 'user@example.com',
+    title: video.title || 'Untitled Video',
+    description: video.description || 'No description available',
+    createdAt: video.createdAt || new Date()
+  }));
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
@@ -36,10 +44,20 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
   const { data: session } = useSession();
   const { showNotification } = useNotification();
 
-  const isLiked = session?.user ? localVideo.likes.includes(session.user.id) : false;
+  const isLiked = session?.user && localVideo.likes 
+    ? localVideo.likes.includes(session.user.id) 
+    : false;
 
   useEffect(() => {
-    setLocalVideo(video);
+    setLocalVideo({
+      ...video,
+      likes: video.likes || [],
+      comments: video.comments || [],
+      userEmail: video.userEmail || 'user@example.com',
+      title: video.title || 'Untitled Video',
+      description: video.description || 'No description available',
+      createdAt: video.createdAt || new Date()
+    });
   }, [video]);
 
   const togglePlay = () => {
@@ -59,8 +77,16 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
     setIsLiking(true);
     try {
       const updatedVideo = await apiClient.likeVideo(localVideo._id!.toString());
-      setLocalVideo(updatedVideo);
-      onVideoUpdate?.(updatedVideo);
+      const safeUpdatedVideo = {
+        ...updatedVideo,
+        likes: updatedVideo.likes || [],
+        comments: updatedVideo.comments || [],
+        userEmail: updatedVideo.userEmail || localVideo.userEmail,
+        title: updatedVideo.title || localVideo.title,
+        description: updatedVideo.description || localVideo.description
+      };
+      setLocalVideo(safeUpdatedVideo);
+      onVideoUpdate?.(safeUpdatedVideo);
       
       showNotification(
         isLiked ? "Removed from likes" : "Added to likes",
@@ -83,8 +109,16 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
         localVideo._id!.toString(),
         newComment.trim()
       );
-      setLocalVideo(updatedVideo);
-      onVideoUpdate?.(updatedVideo);
+      const safeUpdatedVideo = {
+        ...updatedVideo,
+        likes: updatedVideo.likes || localVideo.likes,
+        comments: updatedVideo.comments || [],
+        userEmail: updatedVideo.userEmail || localVideo.userEmail,
+        title: updatedVideo.title || localVideo.title,
+        description: updatedVideo.description || localVideo.description
+      };
+      setLocalVideo(safeUpdatedVideo);
+      onVideoUpdate?.(safeUpdatedVideo);
       setNewComment("");
       showNotification("Comment added", "success");
     } catch (error) {
@@ -94,15 +128,44 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
     }
   };
 
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+  const formatTimeAgo = (date: Date | string | undefined) => {
+    if (!date) return 'now';
     
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    const now = new Date();
+    const targetDate = new Date(date);
+    const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${Math.max(0, diffInSeconds)}s`;
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
     return `${Math.floor(diffInSeconds / 86400)}d`;
   };
+
+  const getUsernameFromEmail = (email: string | undefined) => {
+    if (!email || typeof email !== 'string') return 'Unknown';
+    try {
+      return email.split('@')[0] || 'Unknown';
+    } catch {
+      return 'Unknown';
+    }
+  };
+
+  // Don't render if essential video data is missing
+  if (!localVideo.videoUrl) {
+    return (
+      <div className="flex justify-center items-center bg-black relative">
+        <div className="relative w-[360px] h-[640px] sm:w-[400px] sm:h-[711px] rounded-xl overflow-hidden shadow-xl bg-gray-800 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Play className="w-8 h-8" />
+            </div>
+            <p>Video not available</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-center items-center bg-black relative">
       <div className="relative w-[360px] h-[640px] sm:w-[400px] sm:h-[711px] rounded-xl overflow-hidden shadow-xl">
@@ -155,12 +218,14 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
         </button>
 
         {/* Video Link */}
-        <Link
-          href={`/video/${localVideo._id}`}
-          className="absolute top-3 left-3 bg-black/50 px-2 py-1 rounded-full text-white text-xs hover:bg-black/70 z-10"
-        >
-          View
-        </Link>
+        {localVideo._id && (
+          <Link
+            href={`/video/${localVideo._id}`}
+            className="absolute top-3 left-3 bg-black/50 px-2 py-1 rounded-full text-white text-xs hover:bg-black/70 z-10"
+          >
+            View
+          </Link>
+        )}
 
         {/* Overlay Info */}
         <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/60 via-black/20 to-transparent">
@@ -169,9 +234,9 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
               <User className="text-white w-4 h-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold">@{localVideo.userEmail.split('@')[0]}</p>
+              <p className="text-sm font-semibold">@{getUsernameFromEmail(localVideo.userEmail)}</p>
               <p className="text-xs text-gray-300">
-                {formatTimeAgo(localVideo.createdAt || new Date())}
+                {formatTimeAgo(localVideo.createdAt)}
               </p>
             </div>
           </div>
@@ -230,20 +295,20 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
             
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {localVideo.comments.map((comment, index) => (
-                <div key={index} className="flex space-x-3">
+                <div key={comment._id || index} className="flex space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
                     <User className="text-white w-4 h-4" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="text-white text-sm font-semibold">
-                        @{comment.userEmail.split('@')[0]}
+                        @{getUsernameFromEmail(comment.userEmail)}
                       </span>
                       <span className="text-gray-400 text-xs">
-                        {formatTimeAgo(comment.createdAt || new Date())}
+                        {formatTimeAgo(comment.createdAt)}
                       </span>
                     </div>
-                    <p className="text-gray-200 text-sm">{comment.text}</p>
+                    <p className="text-gray-200 text-sm">{comment.text || 'No comment text'}</p>
                   </div>
                 </div>
               ))}

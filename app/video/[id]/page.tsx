@@ -62,7 +62,7 @@ export default function VideoPage() {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 relative overflow-hidden">
         <div className="text-center z-10 px-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold text-transparent mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
             Sign in Required
           </h1>
           <p className="text-xl text-gray-300 mb-8 max-w-md mx-auto">
