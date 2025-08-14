@@ -1,17 +1,13 @@
 "use client";
 
 import VideoUploadForm from "../components/VideoUploadForm";
-import Header from "../components/Header";
 import { Upload } from "lucide-react";
 
 export default function VideoUploadPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
-      {/* Header */}
-      <Header />
-      
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">      
       {/* Main Content */}
-      <main className="flex items-center justify-center min-h-screen pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">
+      <main className="flex items-center justify-center min-h-screen py-12 sm:py-16 px-4 sm:px-6 ml-20 md:ml-20">
         <div className="w-full max-w-sm sm:max-w-md mx-auto">
           {/* Simple Header */}
           <div className="text-center mb-6 sm:mb-8">

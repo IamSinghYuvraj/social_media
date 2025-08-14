@@ -31,19 +31,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, videoUrl, thumbnailUrl, captions = [] } = body;
+    const { caption, videoUrl, thumbnailUrl, captions = [] } = body as {
+      caption?: string;
+      videoUrl?: string;
+      thumbnailUrl?: string;
+      captions?: unknown[];
+    };
 
-    if (!title || !description || !videoUrl || !thumbnailUrl) {
+    if (!caption || !videoUrl || !thumbnailUrl) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields (caption, videoUrl, thumbnailUrl)" },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
     const video = new Video({
-      title,
-      description,
+      caption,
       videoUrl,
       thumbnailUrl,
       userId: session.user.id,

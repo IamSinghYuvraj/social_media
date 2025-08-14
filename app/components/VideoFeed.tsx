@@ -64,6 +64,7 @@ export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentVideoId = searchParams.get("id");
+  const activeId = currentVideoId ?? videos[0]?._id?.toString() ?? null;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -105,7 +106,11 @@ export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
           data-id={video._id?.toString()}
           className="snap-start h-screen flex justify-center items-center video-section"
         >
-          <VideoComponent video={video} onVideoUpdate={onVideoUpdate} />
+          <VideoComponent
+            video={video}
+            onVideoUpdate={onVideoUpdate}
+            isActive={video._id?.toString() === activeId}
+          />
         </div>
       ))}
     </div>

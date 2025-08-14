@@ -83,6 +83,47 @@ export async function PUT(
         });
         break;
 
+      case "reply": {
+        type Reply = { userId: string; userEmail: string; text: string };
+        type CommentNode = { _id?: unknown; replies?: CommentNode[] };
+        type WithReplies = { replies: Reply[] } & CommentNode;
+        const { parentCommentId, text: replyText } = data as { parentCommentId?: string; text?: string };
+        if (!parentCommentId || !replyText || replyText.trim().length === 0) {
+          return NextResponse.json(
+            { error: "parentCommentId and reply text are required" },
+            { status: 400 }
+          );
+        }
+
+        // helper to find a comment recursively by id and push a reply
+        const pushReply = (comments: CommentNode[]): boolean => {
+          for (const comment of comments) {
+            const idStr = comment._id ? String(comment._id) : undefined;
+            if (idStr === parentCommentId) {
+              const target = (comment as WithReplies);
+              target.replies = (target.replies || []) as Reply[];
+              target.replies.push({
+                userId: session.user.id,
+                userEmail: session.user.email,
+                text: replyText.trim(),
+              });
+              return true;
+            }
+            if (comment.replies && pushReply(comment.replies)) return true;
+          }
+          return false;
+        };
+
+        const ok = pushReply(video.comments as unknown as CommentNode[]);
+        if (!ok) {
+          return NextResponse.json(
+            { error: "Parent comment not found" },
+            { status: 404 }
+          );
+        }
+        break;
+      }
+
       case "update_captions":
         if (video.userId !== session.user.id) {
           return NextResponse.json(

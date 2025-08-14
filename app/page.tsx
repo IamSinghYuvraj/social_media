@@ -44,10 +44,10 @@ export default function Home() {
   // Show authentication required screen
   if (status === "loading") {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-white text-lg">Loading...</p>
+          <p className="text-gray-900 dark:text-white text-lg">Loading...</p>
         </div>
       </div>
     );

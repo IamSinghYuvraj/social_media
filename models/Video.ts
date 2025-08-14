@@ -11,6 +11,7 @@ export interface IComment {
     userEmail: string;
     text: string;
     createdAt?: Date;
+    replies?: IComment[];
 }
 
 export interface ICaption {
@@ -21,18 +22,14 @@ export interface ICaption {
 
 export interface IVideo {
     _id?: mongoose.Types.ObjectId;
-    title : string;
-    description: string;
+    caption: string;
     videoUrl: string;
     thumbnailUrl:  string;
     userId: string;
     userEmail: string;
-      likes: string[];
-  comments: Array<{
-    userEmail: string; // Make sure this is also required in comments
-    text: string;
-    createdAt?: Date;
-  }>;captions: ICaption[];
+    likes: string[];
+    comments: IComment[];
+    captions: ICaption[];
     controls?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
@@ -56,8 +53,7 @@ const captionSchema = new Schema<ICaption>({
 });
 
 const videoSchema = new Schema<IVideo>({
-    title: {type: String, required: true},
-    description: {type: String, required: true},
+    caption: {type: String, required: true, maxlength: 2000},
     videoUrl: {type: String, required: true},
     thumbnailUrl: {type: String, required: true},
     userId: {type: String, required: true},

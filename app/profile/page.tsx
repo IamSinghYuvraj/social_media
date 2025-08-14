@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { IVideo } from "@/models/Video";
 import { apiClient } from "@/lib/api-client";
-import Header from "../components/Header";
+
 import { User, Video, Heart, MessageCircle, Calendar, Upload, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Image } from "@imagekit/next";
@@ -18,26 +18,40 @@ export default function ProfilePage() {
   const [videos, setVideos] = useState<IVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{
+    username: string;
+    profilePicture?: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
-    const fetchUserVideos = async () => {
-      if (!session?.user?.id) return;
+    const fetchUserData = async () => {
+      if (!session?.user?.email) return;
       
       try {
         setLoading(true);
         setError(null);
+        
+        // Fetch user profile
+        const profileRes = await fetch("/api/user/profile");
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setUserProfile(profileData);
+        }
+        
+        // Fetch user videos
         const userVideos = await apiClient.getUserVideos(session.user.id);
         setVideos(userVideos);
       } catch (error) {
-        console.error("Error fetching user videos:", error);
-        setError("Failed to load your videos");
+        console.error("Error fetching user data:", error);
+        setError("Failed to load your profile");
       } finally {
         setLoading(false);
       }
     };
 
     if (status !== "loading" && session?.user) {
-      fetchUserVideos();
+      fetchUserData();
     }
   }, [session, status]);
 
@@ -76,28 +90,33 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
-      <Header />
-      
-      <main className="pt-20 pb-8 px-4 sm:px-6 lg:px-8">
+      <main className="py-8 px-4 sm:px-6 lg:px-8 ml-20 md:ml-20">
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
           <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-modern-lg border border-gray-200/30 dark:border-gray-800/30 p-6 sm:p-8 mb-8 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
               {/* Profile Avatar */}
               <div className="relative">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-modern">
-                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-modern overflow-hidden bg-gray-200 dark:bg-gray-800">
+                  {userProfile?.profilePicture ? (
+                    <img 
+                      src={userProfile.profilePicture} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                  )}
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-sm"></div>
               </div>
               
               {/* Profile Info */}
               <div className="flex-1 text-center sm:text-left">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 text-crisp">
-                  @{session.user.email?.split('@')[0]}
+                  @{userProfile?.username || session.user.email?.split('@')[0]}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  {session.user.email}
+                  {userProfile?.email || session.user.email}
                 </p>
                 
                 {/* Stats */}
@@ -201,7 +220,7 @@ export default function ProfilePage() {
                       <Image
                         urlEndpoint={urlEndpoint}
                         src={video.thumbnailUrl}
-                        alt={video.title}
+                        alt={video.caption}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         width={300}
                         height={533}
@@ -220,7 +239,7 @@ export default function ProfilePage() {
                     {/* Video Info */}
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 text-sm">
-                        {video.title}
+                        {video.caption}
                       </h3>
                       
                       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

@@ -65,6 +65,13 @@ class ApiClient {
     });
   }
 
+  async replyToComment(videoId: string, parentCommentId: string, text: string) {
+    return this.fetch<IVideo>(`/videos/${videoId}`, {
+      method: "PUT",
+      body: { action: "reply", parentCommentId, text },
+    });
+  }
+
   async updateCaptions(videoId: string, captions: ICaption[]) {
     return this.fetch<IVideo>(`/videos/${videoId}`, {
       method: "PUT",

@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import Providers from "./components/Providers";
+import Sidebar from "./components/Sidebar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,8 +18,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
+        {/* Early theme bootstrap to avoid flash and ensure home page picks theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try { const saved = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const enableDark = saved ? saved === 'dark' : prefersDark; document.documentElement.classList.toggle('dark', !!enableDark); } catch (e) {} })();`,
+          }}
+        />
         <Providers>
-          {children}
+          <Sidebar />
+          <main className="md:ml-20 pb-16 md:pb-0">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

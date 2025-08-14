@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { IVideo } from "@/models/Video";
+import { IVideo, IComment } from "@/models/Video";
 import { Video } from "@imagekit/next";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
@@ -21,9 +21,10 @@ const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT!;
 interface VideoComponentProps {
   video: IVideo;
   onVideoUpdate?: (updatedVideo: IVideo) => void;
+  isActive?: boolean;
 }
 
-export default function VideoComponent({ video, onVideoUpdate }: VideoComponentProps) {
+export default function VideoComponent({ video, onVideoUpdate, isActive }: VideoComponentProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [localVideo, setLocalVideo] = useState(() => ({
@@ -31,8 +32,7 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
     likes: video.likes || [],
     comments: video.comments || [],
     userEmail: video.userEmail || 'user@example.com',
-    title: video.title || 'Untitled Video',
-    description: video.description || 'No description available',
+    caption: video.caption || 'No caption available',
     createdAt: video.createdAt || new Date()
   }));
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -40,6 +40,9 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [replyForCommentId, setReplyForCommentId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   
   const { data: session } = useSession();
   const { showNotification } = useNotification();
@@ -54,11 +57,22 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
       likes: video.likes || [],
       comments: video.comments || [],
       userEmail: video.userEmail || 'user@example.com',
-      title: video.title || 'Untitled Video',
-      description: video.description || 'No description available',
+      caption: video.caption || 'No caption available',
       createdAt: video.createdAt || new Date()
     });
   }, [video]);
+
+  // Autoplay/pause when active changes
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (isActive) {
+      el.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    } else {
+      el.pause();
+      setIsPlaying(false);
+    }
+  }, [isActive]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -69,6 +83,100 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
       videoRef.current.pause();
       setIsPlaying(false);
     }
+  };
+
+  const handleReplySubmit = async (parentId: string) => {
+    if (!session?.user || !replyText.trim() || isSubmittingReply) return;
+    setIsSubmittingReply(true);
+    try {
+      const updatedVideo = await apiClient.replyToComment(
+        localVideo._id!.toString(),
+        parentId,
+        replyText.trim()
+      );
+      const safeUpdatedVideo = {
+        ...updatedVideo,
+        likes: updatedVideo.likes || localVideo.likes,
+        comments: updatedVideo.comments || [],
+        userEmail: updatedVideo.userEmail || localVideo.userEmail,
+        caption: updatedVideo.caption || localVideo.caption,
+        createdAt: updatedVideo.createdAt || localVideo.createdAt
+      };
+      setLocalVideo(safeUpdatedVideo);
+      onVideoUpdate?.(safeUpdatedVideo);
+      setReplyText("");
+      setReplyForCommentId(null);
+      showNotification("Reply added", "success");
+    } catch {
+      showNotification("Failed to add reply", "error");
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const safeId = (c: { _id?: unknown }): string => {
+    const v = c._id as undefined | string | { toString?: () => string };
+    if (!v) return '';
+    return typeof v === 'string' ? v : v.toString?.() ?? '';
+  };
+
+  const renderComments = (comments: IComment[], level = 0) => {
+    return comments.map((comment) => (
+      <div key={safeId(comment) || comment.text + String(level)} className={`flex space-x-3 ${level > 0 ? 'ml-8' : ''}`}>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+          <User className="text-white w-4 h-4" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="text-gray-900 dark:text-white text-sm font-semibold">
+              @{getUsernameFromEmail(comment.userEmail)}
+            </span>
+            <span className="text-gray-500 dark:text-gray-400 text-xs">
+              {formatTimeAgo(comment.createdAt)}
+            </span>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 text-sm">{comment.text || 'No comment text'}</p>
+          {session?.user && (
+            <button
+              onClick={() => setReplyForCommentId(safeId(comment))}
+              className="text-xs text-gray-500 hover:text-gray-300 mt-1"
+            >
+              Reply
+            </button>
+          )}
+
+          {replyForCommentId === safeId(comment) && (
+            <div className="mt-2 flex space-x-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write a reply..."
+                className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-200 dark:border-gray-700"
+                maxLength={300}
+              />
+              <button
+                onClick={() => handleReplySubmit(safeId(comment))}
+                disabled={!replyText.trim() || isSubmittingReply}
+                className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              >
+                {isSubmittingReply ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Send'
+                )}
+              </button>
+            </div>
+          )}
+
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="mt-3 space-y-3">
+              {renderComments(comment.replies, level + 1)}
+            </div>
+          )}
+        </div>
+      </div>
+    ));
   };
 
   const handleLike = async () => {
@@ -82,8 +190,8 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
         likes: updatedVideo.likes || [],
         comments: updatedVideo.comments || [],
         userEmail: updatedVideo.userEmail || localVideo.userEmail,
-        title: updatedVideo.title || localVideo.title,
-        description: updatedVideo.description || localVideo.description
+        caption: updatedVideo.caption || localVideo.caption,
+        createdAt: updatedVideo.createdAt || localVideo.createdAt
       };
       setLocalVideo(safeUpdatedVideo);
       onVideoUpdate?.(safeUpdatedVideo);
@@ -92,7 +200,7 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
         isLiked ? "Removed from likes" : "Added to likes",
         "success"
       );
-    } catch (error) {
+    } catch {
       showNotification("Failed to update like", "error");
     } finally {
       setIsLiking(false);
@@ -114,14 +222,14 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
         likes: updatedVideo.likes || localVideo.likes,
         comments: updatedVideo.comments || [],
         userEmail: updatedVideo.userEmail || localVideo.userEmail,
-        title: updatedVideo.title || localVideo.title,
-        description: updatedVideo.description || localVideo.description
+        caption: updatedVideo.caption || localVideo.caption,
+        createdAt: updatedVideo.createdAt || localVideo.createdAt
       };
       setLocalVideo(safeUpdatedVideo);
       onVideoUpdate?.(safeUpdatedVideo);
       setNewComment("");
       showNotification("Comment added", "success");
-    } catch (error) {
+    } catch {
       showNotification("Failed to add comment", "error");
     } finally {
       setIsSubmittingComment(false);
@@ -241,8 +349,7 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
             </div>
           </div>
 
-          <h3 className="text-base font-bold mb-1">{localVideo.title}</h3>
-          <p className="text-sm text-gray-200 mb-4">{localVideo.description}</p>
+          <p className="text-sm text-gray-200 mb-4">{localVideo.caption}</p>
 
           <div className="flex items-center justify-between">
             <div className="flex space-x-4">
@@ -280,41 +387,24 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
           </div>
         </div>
 
-        {/* Comments Section */}
+        {/* Comments Section - Instagram Style Side Panel */}
         {showComments && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm z-20 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h3 className="text-white font-semibold">Comments ({localVideo.comments.length})</h3>
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 z-20 flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-gray-900 dark:text-white font-semibold">Comments ({localVideo.comments.length})</h3>
               <button
                 onClick={() => setShowComments(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 ✕
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {localVideo.comments.map((comment, index) => (
-                <div key={comment._id || index} className="flex space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <User className="text-white w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-white text-sm font-semibold">
-                        @{getUsernameFromEmail(comment.userEmail)}
-                      </span>
-                      <span className="text-gray-400 text-xs">
-                        {formatTimeAgo(comment.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-gray-200 text-sm">{comment.text || 'No comment text'}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {renderComments(localVideo.comments)}
               
               {localVideo.comments.length === 0 && (
-                <div className="text-center text-gray-400 py-8">
+                <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                   <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No comments yet</p>
                   <p className="text-sm">Be the first to comment!</p>
@@ -323,7 +413,7 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
             </div>
             
             {session?.user && (
-              <form onSubmit={handleComment} className="p-4 border-t border-gray-700">
+              <form onSubmit={handleComment} className="p-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
                     <User className="text-white w-4 h-4" />
@@ -334,7 +424,7 @@ export default function VideoComponent({ video, onVideoUpdate }: VideoComponentP
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Add a comment..."
-                      className="flex-1 bg-gray-800 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-200 dark:border-gray-700"
                       maxLength={500}
                     />
                     <button

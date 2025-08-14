@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { User, Upload, Search, Camera, Moon, Sun, Bell, Menu } from "lucide-react";
+import { User, Upload, Search, Camera, Moon, Sun, Bell } from "lucide-react";
 import { useNotification } from "./Notification";
 import { useState, useEffect } from "react";
 

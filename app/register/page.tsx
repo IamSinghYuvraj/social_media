@@ -8,11 +8,14 @@ import { Eye, EyeOff, Mail, Lock, Camera, ArrowRight, Sparkles, User } from "luc
 
 export default function Register() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const router = useRouter();
   const { showNotification } = useNotification();
 
@@ -26,11 +29,22 @@ export default function Register() {
       return;
     }
 
+    if (username.length < 3) {
+      showNotification("Username must be at least 3 characters long", "error");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          username,
+          profilePicture: profilePicture || undefined
+        }),
       });
 
       const data = await res.json();
@@ -83,6 +97,68 @@ export default function Register() {
         {/* Register Form */}
         <div className="glass rounded-2xl sm:rounded-3xl shadow-modern-lg p-6 sm:p-8 lg:p-10 border border-white/10 dark:border-gray-800/10 backdrop-blur-xl scale-in">
           <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 lg:space-y-7">
+            {/* Profile Picture Upload */}
+            <div className="space-y-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-medium text-sm text-crisp">
+                Profile Picture (Optional)
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                  {profilePicture ? (
+                    <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-white" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          setProfilePicture(e.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                    id="profilePicture"
+                  />
+                  <label
+                    htmlFor="profilePicture"
+                    className="cursor-pointer inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Choose Photo
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="username" className="block text-gray-700 dark:text-gray-300 font-medium text-sm text-crisp">
+                Username
+              </label>
+              <div className="relative group">
+                <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  required
+                  placeholder="Choose a username"
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white/60 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-200/30 dark:border-gray-700/30 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base shadow-sm focus:shadow-modern"
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Only lowercase letters, numbers, and underscores allowed
+              </p>
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="email" className="block text-gray-700 dark:text-gray-300 font-medium text-sm text-crisp">
                 Email Address
