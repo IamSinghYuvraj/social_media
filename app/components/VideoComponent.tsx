@@ -44,6 +44,7 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
   const [replyForCommentId, setReplyForCommentId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
   
   const { data: session } = useSession();
   const { showNotification } = useNotification();
@@ -183,6 +184,10 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
   const handleLike = async () => {
     if (!session?.user || isLiking) return;
     
+    // Trigger like animation
+    setShowLikeAnimation(true);
+    setTimeout(() => setShowLikeAnimation(false), 1000);
+    
     setIsLiking(true);
     try {
       const updatedVideo = await apiClient.likeVideo(localVideo._id!.toString());
@@ -315,7 +320,18 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
         {/* Play Button */}
         {!isPlaying && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Play className="w-16 h-16 text-white opacity-80" />
+            <div className="w-16 h-16 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Play className="w-8 h-8 text-white ml-1" />
+            </div>
+          </div>
+        )}
+
+        {/* Like Animation */}
+        {showLikeAnimation && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div className="like-animation">
+              <Heart className="w-20 h-20 text-red-500 fill-current drop-shadow-lg" />
+            </div>
           </div>
         )}
 
@@ -358,23 +374,23 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
               <button
                 onClick={handleLike}
                 disabled={!session?.user || isLiking}
-                className={`flex items-center space-x-1 transition-colors ${
+                className={`flex items-center space-x-1 transition-all duration-300 ${
                   isLiked ? "text-red-500" : "text-gray-300"
-                } ${!session?.user ? "opacity-50 cursor-not-allowed" : "hover:text-red-400"}`}
+                } ${!session?.user ? "opacity-50 cursor-not-allowed" : "hover:text-red-400 hover:scale-110 active:scale-95"}`}
               >
-                <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""} ${isLiking ? "animate-pulse" : ""}`} />
+                <Heart className={`w-5 h-5 transition-all duration-300 ${isLiked ? "fill-current animate-heart-beat" : ""} ${isLiking ? "animate-pulse" : ""}`} />
                 <span className="text-sm">{localVideo.likes.length}</span>
               </button>
 
               <button 
                 onClick={() => setShowComments(!showComments)}
-                className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center space-x-1 text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 <MessageCircle className="w-5 h-5" />
                 <span className="text-sm">{localVideo.comments.length}</span>
               </button>
 
-              <button className="flex items-center space-x-1 text-gray-300">
+              <button className="flex items-center space-x-1 text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
                 <Share className="w-5 h-5" />
                 <span className="text-sm hidden sm:inline">Share</span>
               </button>
@@ -382,7 +398,7 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
 
             <button
               onClick={() => setIsBookmarked(!isBookmarked)}
-              className={isBookmarked ? "text-yellow-400" : "text-gray-300"}
+              className={`transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"}`}
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
             </button>
