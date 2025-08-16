@@ -6,11 +6,12 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
     await connectToDatabase();
-    const video = await Video.findById(params.id).lean();
+    const { id } = await params;
+    const video = await Video.findById(id).lean();
     
     if (!video) {
       return NextResponse.json(
@@ -29,10 +30,51 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    await connectToDatabase();
+    const { id } = await params;
+    const video = await Video.findById(id);
+    if (!video) {
+      return NextResponse.json(
+        { error: "Video not found" },
+        { status: 404 }
+      );
+    }
+
+    if (video.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    await video.deleteOne();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting video:", error);
+    return NextResponse.json(
+      { error: "Failed to delete video" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -46,7 +88,8 @@ export async function PUT(
     const { action, ...data } = body;
 
     await connectToDatabase();
-    const video = await Video.findById(params.id);
+    const { id } = await params;
+    const video = await Video.findById(id);
 
     if (!video) {
       return NextResponse.json(
@@ -84,9 +127,6 @@ export async function PUT(
         break;
 
       case "reply": {
-        type Reply = { userId: string; userEmail: string; text: string };
-        type CommentNode = { _id?: unknown; replies?: CommentNode[] };
-        type WithReplies = { replies: Reply[] } & CommentNode;
         const { parentCommentId, text: replyText } = data as { parentCommentId?: string; text?: string };
         if (!parentCommentId || !replyText || replyText.trim().length === 0) {
           return NextResponse.json(
@@ -95,27 +135,24 @@ export async function PUT(
           );
         }
 
-        // helper to find a comment recursively by id and push a reply
-        const pushReply = (comments: CommentNode[]): boolean => {
-          for (const comment of comments) {
-            const idStr = comment._id ? String(comment._id) : undefined;
-            if (idStr === parentCommentId) {
-              const target = (comment as WithReplies);
-              target.replies = (target.replies || []) as Reply[];
-              target.replies.push({
-                userId: session.user.id,
-                userEmail: session.user.email,
-                text: replyText.trim(),
-              });
-              return true;
+        // Find the parent comment and add reply
+        let commentFound = false;
+        for (const comment of video.comments) {
+          if (comment._id && comment._id.toString() === parentCommentId) {
+            if (!comment.replies) {
+              comment.replies = [];
             }
-            if (comment.replies && pushReply(comment.replies)) return true;
+            comment.replies.push({
+              userId: session.user.id,
+              userEmail: session.user.email,
+              text: replyText.trim(),
+            });
+            commentFound = true;
+            break;
           }
-          return false;
-        };
+        }
 
-        const ok = pushReply(video.comments as unknown as CommentNode[]);
-        if (!ok) {
+        if (!commentFound) {
           return NextResponse.json(
             { error: "Parent comment not found" },
             { status: 404 }

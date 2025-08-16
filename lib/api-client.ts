@@ -78,6 +78,12 @@ class ApiClient {
       body: { action: "update_captions", captions },
     });
   }
+
+  async deleteVideo(videoId: string) {
+    return this.fetch<{ success: boolean }>(`/videos/${videoId}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

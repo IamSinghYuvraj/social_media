@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { IVideo } from "@/models/Video";
 import { apiClient } from "@/lib/api-client";
 
-import { User, Video, Heart, MessageCircle, Calendar, Upload, Loader2 } from "lucide-react";
+import { User, Video, Heart, MessageCircle, Calendar, Upload, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Image, Video as VideoPlayer } from "@imagekit/next";
+import { Video as VideoPlayer } from "@imagekit/next";
 
 const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT!;
 
@@ -23,6 +23,7 @@ export default function ProfilePage() {
     profilePicture?: string;
     email: string;
   } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -54,6 +55,50 @@ export default function ProfilePage() {
       fetchUserData();
     }
   }, [session, status]);
+
+  // Autoplay/pause videos in the grid like the videos page
+  useEffect(() => {
+    const container = document.getElementById("profile-videos-container");
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const videoEl = entry.target.querySelector("video") as HTMLVideoElement | null;
+          if (!videoEl) return;
+          if (entry.isIntersecting) {
+            // attempt to play when 70% visible
+            videoEl.play().catch(() => {});
+          } else {
+            videoEl.pause();
+            videoEl.currentTime = 0;
+          }
+        });
+      },
+      { threshold: 0.7 }
+    );
+
+    const items = container.querySelectorAll(".profile-video-card");
+    items.forEach((el) => observer.observe(el));
+    return () => {
+      items.forEach((el) => observer.unobserve(el));
+    };
+  }, [videos]);
+
+  const handleDelete = async (id?: string) => {
+    if (!id) return;
+    if (!confirm("Delete this video? This cannot be undone.")) return;
+    try {
+      setDeletingId(id);
+      await apiClient.deleteVideo(id);
+      setVideos((prev) => prev.filter((v) => v._id?.toString() !== id));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete video");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Show authentication required screen
   if (status === "loading") {
@@ -208,13 +253,27 @@ export default function ProfilePage() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div id="profile-videos-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {videos.map((video) => (
                   <Link
                     key={video._id?.toString()}
                     href={`/video/${video._id}`}
-                    className="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
+                    className="profile-video-card group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
                   >
+                    {/* Delete Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(video._id?.toString()); }}
+                      className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-sm"
+                      title="Delete video"
+                      disabled={deletingId === video._id?.toString()}
+                    >
+                      {deletingId === video._id?.toString() ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                     {/* Video Thumbnail */}
                     <div className="aspect-[9/16] relative overflow-hidden">
                       <VideoPlayer
@@ -224,6 +283,9 @@ export default function ProfilePage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         controls={false}
                         muted
+                        loop
+                        autoPlay
+                        playsInline
                         preload="metadata"
                         poster={video.thumbnailUrl}
                       />

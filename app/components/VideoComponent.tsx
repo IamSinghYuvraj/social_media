@@ -89,6 +89,9 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
 
   const handleReplySubmit = async (parentId: string) => {
     if (!session?.user || !replyText.trim() || isSubmittingReply) return;
+    
+    console.log('Submitting reply:', { parentId, replyText: replyText.trim(), videoId: localVideo._id });
+    
     setIsSubmittingReply(true);
     try {
       const updatedVideo = await apiClient.replyToComment(
@@ -96,20 +99,29 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
         parentId,
         replyText.trim()
       );
+      
+      console.log('Reply response:', updatedVideo);
+      console.log('Updated comments:', updatedVideo.comments);
+      
+      // Ensure we preserve comments - don't default to empty array!
       const safeUpdatedVideo = {
         ...updatedVideo,
         likes: updatedVideo.likes || localVideo.likes,
-        comments: updatedVideo.comments || [],
+        comments: updatedVideo.comments || localVideo.comments,
         userEmail: updatedVideo.userEmail || localVideo.userEmail,
         caption: updatedVideo.caption || localVideo.caption,
         createdAt: updatedVideo.createdAt || localVideo.createdAt
       };
+      
+      console.log('Setting local video with comments:', safeUpdatedVideo.comments);
+      
       setLocalVideo(safeUpdatedVideo);
       onVideoUpdate?.(safeUpdatedVideo);
       setReplyText("");
       setReplyForCommentId(null);
       showNotification("Reply added", "success");
-    } catch {
+    } catch (error) {
+      console.error('Reply submission error:', error);
       showNotification("Failed to add reply", "error");
     } finally {
       setIsSubmittingReply(false);
@@ -123,8 +135,10 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
   };
 
   const renderComments = (comments: IComment[], level = 0) => {
-    return comments.map((comment) => (
-      <div key={safeId(comment) || comment.text + String(level)} className={`flex space-x-3 ${level > 0 ? 'ml-8' : ''}`}>
+    if (!comments || comments.length === 0) return null;
+    
+    return comments.map((comment, index) => (
+      <div key={safeId(comment) || `${comment.text}-${level}-${index}`} className={`flex space-x-3 ${level > 0 ? 'ml-6 pl-4 border-l-2 border-gray-200 dark:border-gray-700' : ''}`}>
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
           <User className="text-white w-4 h-4" />
         </div>
@@ -172,7 +186,10 @@ export default function VideoComponent({ video, onVideoUpdate, isActive }: Video
           )}
 
           {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-2">
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+              </div>
               {renderComments(comment.replies, level + 1)}
             </div>
           )}
