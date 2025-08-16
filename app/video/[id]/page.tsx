@@ -49,7 +49,7 @@ export default function VideoPage() {
   // Show authentication required screen
   if (status === "loading") {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-screen flex items-center justify-center bg-black dark:bg-black">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-white text-lg">Loading...</p>
@@ -60,7 +60,7 @@ export default function VideoPage() {
 
   if (!session) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 relative overflow-hidden">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 dark:from-purple-900 dark:via-black dark:to-pink-900 relative overflow-hidden">
         <div className="text-center z-10 px-8">
           <h1 className="text-4xl md:text-6xl font-bold text-transparent mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
             Sign in Required
@@ -154,7 +154,7 @@ export default function VideoPage() {
 
   // Main video page
   return (
-    <div className="h-screen bg-black">
+    <div className="h-screen bg-black dark:bg-black">
       <Header />
       
       {/* Back Button */}

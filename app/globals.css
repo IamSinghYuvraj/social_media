@@ -191,6 +191,12 @@
   transition-duration: 300ms;
 }
 
+/* Backdrop blur for modern glass effect */
+.backdrop-blur-modern {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
 /* Smooth video transitions */
 video {
   object-fit: cover;

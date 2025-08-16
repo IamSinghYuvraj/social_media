@@ -44,7 +44,7 @@ export default function Home() {
   // Show authentication required screen
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-gray-900 dark:text-white text-lg">Loading...</p>
@@ -55,7 +55,7 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 relative overflow-hidden">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 dark:from-purple-900 dark:via-black dark:to-pink-900 relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse"></div>
@@ -99,7 +99,7 @@ export default function Home() {
   // Show loading state
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-screen flex items-center justify-center bg-black dark:bg-black">
         <div className="flex flex-col items-center space-y-6">
           <div className="relative">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
@@ -119,7 +119,7 @@ export default function Home() {
   // Show error state
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-screen flex items-center justify-center bg-black dark:bg-black">
         <div className="text-center">
           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +148,7 @@ export default function Home() {
   // Show empty state
   if (videos.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black relative">
+      <div className="h-screen flex items-center justify-center bg-black dark:bg-black relative">
         {/* Floating Upload Button */}
         <Link
           href="/upload"
@@ -187,7 +187,7 @@ export default function Home() {
 
   // Main video feed
   return (
-    <div className="h-screen w-full bg-black overflow-hidden mobile-fullscreen">
+    <div className="h-screen w-full bg-black dark:bg-black overflow-hidden mobile-fullscreen">
       {/* Floating Upload Button */}
       <Link
         href="/upload"

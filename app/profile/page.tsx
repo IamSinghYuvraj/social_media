@@ -8,7 +8,7 @@ import { apiClient } from "@/lib/api-client";
 
 import { User, Video, Heart, MessageCircle, Calendar, Upload, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Image } from "@imagekit/next";
+import { Image, Video as VideoPlayer } from "@imagekit/next";
 
 const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT!;
 
@@ -213,17 +213,19 @@ export default function ProfilePage() {
                   <Link
                     key={video._id?.toString()}
                     href={`/video/${video._id}`}
-                    className="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02]"
+                    className="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
                   >
                     {/* Video Thumbnail */}
                     <div className="aspect-[9/16] relative overflow-hidden">
-                      <Image
+                      <VideoPlayer
                         urlEndpoint={urlEndpoint}
-                        src={video.thumbnailUrl}
+                        src={video.videoUrl}
                         alt={video.caption}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        width={300}
-                        height={533}
+                        controls={false}
+                        muted
+                        preload="metadata"
+                        poster={video.thumbnailUrl}
                       />
                       
                       {/* Play Overlay */}
