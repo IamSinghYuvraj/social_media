@@ -5,10 +5,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname:"ik.imagekit.io",
-        port:""
+        hostname: "ik.imagekit.io",
+        port: ""
       }
     ]
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
   }
 };
 
