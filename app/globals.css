@@ -107,6 +107,25 @@
   scrollbar-width: none;
 }
 
+/* Ensure full coverage for fixed elements */
+.fixed-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Prevent body scroll when modal/overlay is open */
+.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* Disable text selection for better mobile experience */
 .select-none {
   -webkit-user-select: none;
@@ -222,7 +241,7 @@ video {
 /* Full-screen mobile optimization */
 @media screen and (max-width: 768px) {
   body {
-    overflow: hidden;
+    overflow-x: hidden;
   }
   
   /* Hide address bar on mobile */

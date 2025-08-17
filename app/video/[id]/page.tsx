@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { IVideo } from "@/models/Video";
 import { apiClient } from "@/lib/api-client";
 import VideoComponent from "@/app/components/VideoComponent";
-import Header from "@/app/components/Header";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -49,7 +48,7 @@ export default function VideoPage() {
   // Show authentication required screen
   if (status === "loading") {
     return (
-      <div className="h-screen flex items-center justify-center bg-black dark:bg-black">
+      <div className="fixed inset-0 flex items-center justify-center bg-black dark:bg-black z-40">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-white text-lg">Loading...</p>
@@ -60,7 +59,7 @@ export default function VideoPage() {
 
   if (!session) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 dark:from-purple-900 dark:via-black dark:to-pink-900 relative overflow-hidden">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 dark:from-purple-900 dark:via-black dark:to-pink-900 relative overflow-hidden z-40">
         <div className="text-center z-10 px-8">
           <h1 className="text-4xl md:text-6xl font-bold text-transparent mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
             Sign in Required
@@ -91,9 +90,8 @@ export default function VideoPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="h-screen bg-black">
-        <Header />
-        <div className="h-full flex items-center justify-center pt-20">
+      <div className="fixed inset-0 bg-black z-40">
+        <div className="h-full flex items-center justify-center">
           <div className="flex flex-col items-center space-y-6">
             <div className="relative">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
@@ -116,9 +114,8 @@ export default function VideoPage() {
   // Show error state
   if (error || !video) {
     return (
-      <div className="h-screen bg-black">
-        <Header />
-        <div className="h-full flex items-center justify-center pt-20">
+      <div className="fixed inset-0 bg-black z-40">
+        <div className="h-full flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-10 h-10 text-red-400" />
@@ -154,20 +151,18 @@ export default function VideoPage() {
 
   // Main video page
   return (
-    <div className="h-screen bg-black dark:bg-black">
-      <Header />
-      
+    <div className="fixed inset-0 bg-black dark:bg-black z-30">
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="fixed top-20 left-4 z-50 flex items-center space-x-2 bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-full transition-all duration-300 backdrop-blur-sm"
+        className="fixed top-4 left-4 md:left-24 z-50 flex items-center space-x-2 bg-black/50 hover:bg-black/70 text-white px-3 py-2 rounded-full transition-all duration-300 backdrop-blur-sm"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm">Back</span>
       </button>
 
       {/* Video Content */}
-      <div className="h-full flex items-center justify-center pt-20 pb-4">
+      <div className="h-full flex items-center justify-center">
         <VideoComponent video={video} onVideoUpdate={handleVideoUpdate} />
       </div>
     </div>

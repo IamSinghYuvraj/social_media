@@ -104,7 +104,7 @@ export default function ProfilePage() {
   // Show authentication required screen
   if (status === "loading") {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="fixed inset-0 flex items-center justify-center bg-black z-40">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-white text-lg">Loading...</p>
@@ -135,8 +135,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
-      <main className="py-8 px-4 sm:px-6 lg:px-8 ml-20 md:ml-20">
+    <div className="fixed inset-0 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 overflow-y-auto">
+      <main className="py-8 px-4 sm:px-6 lg:px-8 md:ml-20 min-h-full">
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
           <div className="bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-modern-lg border border-gray-200/30 dark:border-gray-800/30 p-6 sm:p-8 mb-8 backdrop-blur-sm">

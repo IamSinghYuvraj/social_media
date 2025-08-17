@@ -79,7 +79,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 ${
+      <div className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-50 ${
         isExpanded ? 'w-64' : 'w-20'
       } hidden md:flex flex-col`}>
         
@@ -91,7 +91,7 @@ export default function Sidebar() {
             </div>
             {isExpanded && (
               <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                SocialVid
+                Clipzy
               </span>
             )}
           </Link>
@@ -195,7 +195,7 @@ export default function Sidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-40 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 md:hidden">
         <nav className="flex items-center justify-around py-2">
           {navigationItems.slice(0, 5).map((item) => {
             const Icon = item.icon;

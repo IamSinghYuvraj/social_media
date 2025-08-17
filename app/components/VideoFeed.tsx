@@ -98,13 +98,13 @@ export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-screen overflow-y-scroll snap-y snap-mandatory no-scrollbar"
+      className="w-full h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar"
     >
       {videos.map((video) => (
         <div
           key={video._id?.toString()}
           data-id={video._id?.toString()}
-          className="snap-start h-screen flex justify-center items-center video-section"
+          className="snap-start h-full flex justify-center items-center video-section"
         >
           <VideoComponent
             video={video}

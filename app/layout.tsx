@@ -26,7 +26,7 @@ export default function RootLayout({
         />
         <Providers>
           <Sidebar />
-          <main className="md:ml-20 pb-16 md:pb-0">
+          <main className="md:ml-20 pb-16 md:pb-0 min-h-screen">
             {children}
           </main>
         </Providers>
