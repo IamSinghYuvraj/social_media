@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import Providers from "./components/Providers";
-import Sidebar from "./components/Sidebar";
+import ConditionalLayout from "./components/ConditionalLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,10 +25,9 @@ export default function RootLayout({
           }}
         />
         <Providers>
-          <Sidebar />
-          <main className="md:ml-20 pb-16 md:pb-0 min-h-screen">
+          <ConditionalLayout>
             {children}
-          </main>
+          </ConditionalLayout>
         </Providers>
       </body>
     </html>

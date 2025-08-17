@@ -41,13 +41,14 @@ export default function Home() {
       )
     );
   };
-  // Show authentication required screen
+
+  // Show loading screen while authentication status is being determined
   if (status === "loading") {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 z-40">
+      <div className="fixed inset-0 flex items-center justify-center bg-black dark:bg-black z-40">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-900 dark:text-white text-lg">Loading...</p>
+          <p className="text-white text-lg">Loading...</p>
         </div>
       </div>
     );
@@ -55,7 +56,7 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 dark:from-purple-900 dark:via-black dark:to-pink-900 relative overflow-hidden z-40">
+      <div className="fixed inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 relative overflow-hidden z-40" style={{ width: '100vw', height: '100vh', minHeight: '100vh', minWidth: '100vw' }}>
         {/* Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse"></div>

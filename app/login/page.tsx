@@ -35,7 +35,7 @@ export default function Login() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden z-50">
+    <div className="fixed inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 flex items-center justify-center overflow-hidden min-h-screen w-full">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-60 h-60 sm:w-80 sm:h-80 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full blur-3xl floating"></div>
@@ -43,7 +43,7 @@ export default function Login() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 bg-gradient-to-br from-green-400/8 to-emerald-400/8 rounded-full blur-3xl floating" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl relative z-10">
+      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Logo and Title */}
         <div className="text-center mb-6 sm:mb-8 fade-in-up">
           <div className="relative inline-block mb-4 sm:mb-6">

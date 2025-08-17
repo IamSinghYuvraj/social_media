@@ -66,7 +66,7 @@ export default function Register() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-red-50/80 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden z-50">
+    <div className="min-h-screen w-full bg-black flex items-center justify-center py-8 px-4 overflow-y-auto">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-60 h-60 sm:w-80 sm:h-80 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full blur-3xl floating"></div>
@@ -74,7 +74,7 @@ export default function Register() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 bg-gradient-to-br from-green-400/8 to-emerald-400/8 rounded-full blur-3xl floating" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl relative z-10">
+      <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Logo and Title */}
         <div className="text-center mb-6 sm:mb-8 fade-in-up">
           <div className="relative inline-block mb-4 sm:mb-6">
@@ -87,11 +87,11 @@ export default function Register() {
             </div>
           </div>
           
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 leading-tight text-crisp">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 leading-tight text-crisp">
             Join
-            <span className="gradient-text block sm:inline"> Clipzy</span>
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent block sm:inline"> Clipzy</span>
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base lg:text-lg px-2">Create your account and start sharing</p>
+          <p className="text-gray-300 text-sm sm:text-base lg:text-lg px-2">Create your account and start sharing</p>
         </div>
 
         {/* Register Form */}
