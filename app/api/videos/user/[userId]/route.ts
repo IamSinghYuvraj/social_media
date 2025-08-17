@@ -4,11 +4,12 @@ import Video from "@/models/Video";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await connectToDatabase();
-    const videos = await Video.find({ userId: params.userId })
+    const { userId } = await params;
+    const videos = await Video.find({ userId })
       .sort({ createdAt: -1 })
       .lean();
     
