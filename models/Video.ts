@@ -9,6 +9,7 @@ export interface IComment {
     _id?: mongoose.Types.ObjectId;
     userId: string;
     userEmail: string;
+    userProfilePicture?: string;
     text: string;
     createdAt?: Date;
 }
@@ -26,6 +27,7 @@ export interface IVideo {
     thumbnailUrl:  string;
     userId: string;
     userEmail: string;
+    userProfilePicture?: string;
     likes: string[];
     comments: IComment[];
     captions: ICaption[];
@@ -43,6 +45,7 @@ export interface IVideo {
 const commentSchema = new Schema<IComment>({
     userId: {type: String, required: true},
     userEmail: {type: String, required: true},
+    userProfilePicture: {type: String},
     text: {type: String, required: true, maxlength: 500},
 }, {timestamps: true});
 
@@ -58,6 +61,7 @@ const videoSchema = new Schema<IVideo>({
     thumbnailUrl: {type: String, required: true},
     userId: {type: String, required: true},
     userEmail: {type: String, required: true},
+    userProfilePicture: {type: String},
     likes: [{type: String}],
     comments: [commentSchema],
     captions: [captionSchema],

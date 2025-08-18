@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback, memo } from "react";
 import { IVideo, IComment } from "@/models/Video";
 import { Video } from "@imagekit/next";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
 import { useNotification } from "./Notification";
@@ -49,6 +50,7 @@ const VideoComponent = memo(function VideoComponent({
   
   const { data: session } = useSession();
   const { showNotification } = useNotification();
+  const [currentUserProfilePicture, setCurrentUserProfilePicture] = useState<string | null>(null);
 
   const isLiked = session?.user && localVideo.likes 
     ? localVideo.likes.includes(session.user.id) 
@@ -93,6 +95,22 @@ const VideoComponent = memo(function VideoComponent({
       createdAt: video.createdAt || new Date()
     });
   }, [video]);
+
+  // Fetch current user's profile picture for comment input avatar fallback
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) setCurrentUserProfilePicture(data?.profilePicture ?? null);
+      } catch {
+        // no-op
+      }
+    })();
+    return () => { isMounted = false; };
+  }, []);
 
   // Optimized video play/pause with intersection observer
   useEffect(() => {
@@ -204,8 +222,19 @@ const VideoComponent = memo(function VideoComponent({
     
     return comments.map((comment, index) => (
       <div key={safeId(comment) || `${comment.text}-${index}`} className="flex space-x-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-          <User className="text-white w-4 h-4" />
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {comment.userProfilePicture ? (
+            <Image 
+              src={comment.userProfilePicture} 
+              alt={`${getUsernameFromEmail(comment.userEmail)} profile`}
+              width={32}
+              height={32}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <User className="text-white w-4 h-4" />
+          )}
         </div>
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-1">
@@ -315,8 +344,19 @@ const VideoComponent = memo(function VideoComponent({
         {/* Overlay Info */}
         <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/60 via-black/20 to-transparent">
           <div className="flex items-center mb-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3">
-              <User className="text-white w-4 h-4" />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3 overflow-hidden">
+              {localVideo.userProfilePicture ? (
+                <Image 
+                  src={localVideo.userProfilePicture} 
+                  alt={`${getUsernameFromEmail(localVideo.userEmail)} profile`}
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <User className="text-white w-4 h-4" />
+              )}
             </div>
             <div>
               <p className="text-sm font-semibold">@{getUsernameFromEmail(localVideo.userEmail)}</p>
@@ -406,8 +446,19 @@ const VideoComponent = memo(function VideoComponent({
             {session?.user && (
               <form onSubmit={handleComment} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <div className="flex space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <User className="text-white w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {session.user.image || currentUserProfilePicture ? (
+                      <Image 
+                        src={(session.user.image || currentUserProfilePicture) as string} 
+                        alt={`${session.user.name || session.user.email} profile`}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <User className="text-white w-4 h-4" />
+                    )}
                   </div>
                   <div className="flex-1 flex space-x-2">
                     <input

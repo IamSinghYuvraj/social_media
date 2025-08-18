@@ -2,10 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Home, Search, Plus, Heart, User } from "lucide-react";
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) setProfilePicture(data?.profilePicture ?? null);
+      } catch {
+        // no-op
+      }
+    })();
+    return () => { isMounted = false; };
+  }, []);
 
   const navItems = [
     {
@@ -55,7 +73,20 @@ export default function BottomNavigation() {
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              <Icon className="w-6 h-6" />
+              {item.label === "Profile" && profilePicture ? (
+                <div className="w-6 h-6 rounded-full overflow-hidden">
+                  <Image
+                    src={profilePicture}
+                    alt="Profile avatar"
+                    width={24}
+                    height={24}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <Icon className="w-6 h-6" />
+              )}
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
@@ -63,4 +94,4 @@ export default function BottomNavigation() {
       </div>
     </div>
   );
-} 
+}

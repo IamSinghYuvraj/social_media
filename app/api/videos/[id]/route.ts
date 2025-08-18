@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Video from "@/models/Video";
+import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -119,9 +120,13 @@ export async function PUT(
           );
         }
 
+        // Fetch user's profile picture for the comment
+        const user = await User.findById(session.user.id).select('profilePicture');
+
         video.comments.push({
           userId: session.user.id,
           userEmail: session.user.email,
+          userProfilePicture: user?.profilePicture,
           text: text.trim(),
         });
         break;

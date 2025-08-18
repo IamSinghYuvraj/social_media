@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
 import { 
   Home, 
   PlusSquare, 
@@ -22,6 +23,7 @@ export default function Sidebar() {
   const { showNotification } = useNotification();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for saved theme preference or default to dark mode
@@ -39,6 +41,23 @@ export default function Sidebar() {
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', newTheme);
   };
+
+  // Fetch user profile picture for avatar usage
+  useEffect(() => {
+    if (!session?.user) return;
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) setProfilePicture(data?.profilePicture ?? null);
+      } catch {
+        // no-op
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [session?.user]);
 
   const handleSignOut = async () => {
     try {
@@ -112,7 +131,21 @@ export default function Sidebar() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400'
                     }`}
                   >
-                    <Icon className={`w-6 h-6 ${item.isActive ? 'text-purple-600 dark:text-purple-400' : ''}`} />
+                    {/* If Profile item and we have avatar, show it */}
+                    {item.name === "Profile" && profilePicture ? (
+                      <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                        <Image
+                          src={profilePicture}
+                          alt="Profile avatar"
+                          width={24}
+                          height={24}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <Icon className={`w-6 h-6 ${item.isActive ? 'text-purple-600 dark:text-purple-400' : ''}`} />
+                    )}
                     {isExpanded && (
                       <span className="font-medium text-sm">{item.name}</span>
                     )}
@@ -158,8 +191,19 @@ export default function Sidebar() {
             {isExpanded && (
               <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400">
+                    {profilePicture ? (
+                      <Image
+                        src={profilePicture}
+                        alt="Profile avatar"
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -199,6 +243,7 @@ export default function Sidebar() {
         <nav className="flex items-center justify-around py-2">
           {navigationItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
+            const isProfile = item.name === "Profile";
             return (
               <Link
                 key={item.name}
@@ -209,7 +254,20 @@ export default function Sidebar() {
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
-                <Icon className="w-6 h-6" />
+                {isProfile && profilePicture ? (
+                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                    <Image
+                      src={profilePicture}
+                      alt="Profile avatar"
+                      width={24}
+                      height={24}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <Icon className="w-6 h-6" />
+                )}
                 <span className="text-xs font-medium">{item.name}</span>
                 {item.isActive && (
                   <div className="w-1 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />

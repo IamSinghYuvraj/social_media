@@ -145,9 +145,12 @@ export default function ProfilePage() {
               <div className="relative">
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-modern overflow-hidden bg-gray-200 dark:bg-gray-800">
                   {userProfile?.profilePicture ? (
-                    <Image 
-                      src={userProfile.profilePicture} 
-                      alt="Profile" 
+                    <Image
+                      src={userProfile.profilePicture}
+                      alt="Profile"
+                      width={128}
+                      height={128}
+                      unoptimized
                       className="w-full h-full object-cover"
                     />
                   ) : (

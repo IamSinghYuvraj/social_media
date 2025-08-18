@@ -27,6 +27,7 @@ export default function VideoUploadForm() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
     reset,
   } = useForm<VideoFormData>({
@@ -38,11 +39,20 @@ export default function VideoUploadForm() {
     },
   });
 
+  // Track if a video URL is present to enable the Publish button
+  const hasVideo = !!watch("videoUrl");
+
   const handleUploadSuccess = (response: IKUploadResponse) => {
-    setValue("videoUrl", response.filePath);
-    setValue("thumbnailUrl", response.thumbnailUrl || response.filePath);
+    // Prefer full URL from ImageKit for immediate playback and availability
+    const videoUrl = response.url || response.filePath;
+    const thumbUrl = response.thumbnailUrl || videoUrl;
+
+    // Ensure RHF watchers update immediately so the Publish button enables
+    setValue("videoUrl", videoUrl, { shouldDirty: true, shouldValidate: true });
+    setValue("thumbnailUrl", thumbUrl, { shouldDirty: true, shouldValidate: true });
     setUploadComplete(true);
-    showNotification("Video uploaded successfully!", "success");
+    setUploadProgress(100);
+    showNotification("🎉 Video uploaded successfully! Ready to publish.", "success");
   };
 
   const handleUploadProgress = (progress: number) => {
@@ -51,14 +61,14 @@ export default function VideoUploadForm() {
 
   const onSubmit = async (data: VideoFormData) => {
     if (!data.videoUrl) {
-      showNotification("Please upload a video first", "error");
+      showNotification("⚠️ Please upload a video first", "error");
       return;
     }
 
     setLoading(true);
     try {
       await apiClient.createVideo({ ...data, captions });
-      showNotification("Video published successfully!", "success");
+      showNotification("🚀 Video published successfully! Your video is now live.", "success");
 
       // Reset form after successful submission
       reset();
@@ -67,7 +77,7 @@ export default function VideoUploadForm() {
       setCaptions([]);
     } catch (error) {
       showNotification(
-        error instanceof Error ? error.message : "Failed to publish video",
+        `❌ ${error instanceof Error ? error.message : "Failed to publish video"}`,
         "error"
       );
     } finally {
@@ -91,18 +101,37 @@ export default function VideoUploadForm() {
           <div className="mt-3 sm:mt-4">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                Uploading... {uploadProgress}%
+                {uploadComplete ? "✅ Upload Complete!" : `Uploading... ${uploadProgress}%`}
               </span>
               {uploadComplete && (
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 animate-pulse" />
               )}
             </div>
             <div className="w-full bg-gray-200/80 dark:bg-gray-700/80 rounded-full h-2 overflow-hidden backdrop-blur-sm">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out shadow-sm"
+                className={`h-full rounded-full transition-all duration-500 ease-out shadow-sm ${
+                  uploadComplete 
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500" 
+                    : "bg-gradient-to-r from-purple-500 to-pink-500"
+                }`}
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
+            {uploadComplete && (
+              <div className="mt-2 text-center">
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  🎬 Video ready! Add a caption and publish.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {hasVideo && !uploadComplete && (
+          <div className="mt-2 text-center">
+            <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+              ✅ Video selected. You can publish once upload finishes.
+            </span>
           </div>
         )}
       </div>
@@ -138,9 +167,9 @@ export default function VideoUploadForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={loading || !uploadComplete}
+        disabled={loading || !hasVideo}
         className={`w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-modern ${
-          loading || !uploadComplete
+          loading || !hasVideo
             ? "bg-gray-300/80 dark:bg-gray-700/80 text-gray-500 dark:text-gray-400 cursor-not-allowed"
             : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-[1.02] hover:shadow-modern-lg"
         }`}
@@ -159,9 +188,14 @@ export default function VideoUploadForm() {
       </button>
 
       {!uploadComplete && (
-        <p className="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Please upload a video before publishing
-        </p>
+        <div className="text-center space-y-1">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            📹 Please upload a video before publishing
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Supported formats: MP4, MOV, AVI (max 100MB)
+          </p>
+        </div>
       )}
     </form>
   );
