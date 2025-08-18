@@ -45,9 +45,6 @@ const VideoComponent = memo(function VideoComponent({
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
-  const [replyForCommentId, setReplyForCommentId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
   
   const { data: session } = useSession();
@@ -201,44 +198,12 @@ const VideoComponent = memo(function VideoComponent({
     }
   }, [session?.user, newComment, isSubmittingComment, localVideo, onVideoUpdate, showNotification]);
 
-  const handleReplySubmit = useCallback(async (parentId: string) => {
-    if (!session?.user || !replyText.trim() || isSubmittingReply) return;
-    
-    setIsSubmittingReply(true);
-    try {
-      const updatedVideo = await apiClient.replyToComment(
-        localVideo._id!.toString(),
-        parentId,
-        replyText.trim()
-      );
-      
-      const safeUpdatedVideo = {
-        ...updatedVideo,
-        likes: updatedVideo.likes || localVideo.likes,
-        comments: updatedVideo.comments || localVideo.comments,
-        userEmail: updatedVideo.userEmail || localVideo.userEmail,
-        caption: updatedVideo.caption || localVideo.caption,
-        createdAt: updatedVideo.createdAt || localVideo.createdAt
-      };
-      
-      setLocalVideo(safeUpdatedVideo);
-      onVideoUpdate?.(safeUpdatedVideo);
-      setReplyText("");
-      setReplyForCommentId(null);
-      showNotification("Reply added", "success");
-    } catch (error) {
-      console.error('Reply submission error:', error);
-      showNotification("Failed to add reply", "error");
-    } finally {
-      setIsSubmittingReply(false);
-    }
-  }, [session?.user, replyText, isSubmittingReply, localVideo, onVideoUpdate, showNotification]);
 
-  const renderComments = useCallback((comments: IComment[], level = 0) => {
+  const renderComments = useCallback((comments: IComment[]) => {
     if (!comments || comments.length === 0) return null;
     
     return comments.map((comment, index) => (
-      <div key={safeId(comment) || `${comment.text}-${level}-${index}`} className={`flex space-x-3 ${level > 0 ? 'ml-6 pl-4 border-l-2 border-gray-200 dark:border-gray-700' : ''}`}>
+      <div key={safeId(comment) || `${comment.text}-${index}`} className="flex space-x-3">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
           <User className="text-white w-4 h-4" />
         </div>
@@ -252,51 +217,10 @@ const VideoComponent = memo(function VideoComponent({
             </span>
           </div>
           <p className="text-gray-700 dark:text-gray-300 text-sm">{comment.text || 'No comment text'}</p>
-          {session?.user && (
-            <button
-              onClick={() => setReplyForCommentId(safeId(comment))}
-              className="text-xs text-gray-500 hover:text-gray-300 mt-1"
-            >
-              Reply
-            </button>
-          )}
-
-          {replyForCommentId === safeId(comment) && (
-            <div className="mt-2 flex space-x-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-200 dark:border-gray-700"
-                maxLength={300}
-              />
-              <button
-                onClick={() => handleReplySubmit(safeId(comment))}
-                disabled={!replyText.trim() || isSubmittingReply}
-                className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg transition-colors text-sm"
-              >
-                {isSubmittingReply ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  'Send'
-                )}
-              </button>
-            </div>
-          )}
-
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
-              </div>
-              {renderComments(comment.replies, level + 1)}
-            </div>
-          )}
         </div>
       </div>
     ));
-  }, [safeId, getUsernameFromEmail, formatTimeAgo, session?.user, replyForCommentId, replyText, isSubmittingReply, handleReplySubmit]);
+  }, [safeId, getUsernameFromEmail, formatTimeAgo]);
 
   // Don't render if essential video data is missing
   if (!localVideo.videoUrl) {

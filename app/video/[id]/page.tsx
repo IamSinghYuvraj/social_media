@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IVideo } from "@/models/Video";
 import { apiClient } from "@/lib/api-client";
-import VideoComponent from "@/app/components/VideoComponent";
+import VideoComponent from "@/app/components/VideoComponentOptimized";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -163,7 +163,7 @@ export default function VideoPage() {
 
       {/* Video Content */}
       <div className="h-full flex items-center justify-center">
-        <VideoComponent video={video} onVideoUpdate={handleVideoUpdate} />
+        <VideoComponent video={video} onVideoUpdate={handleVideoUpdate} isActive={true} />
       </div>
     </div>
   );

@@ -11,7 +11,6 @@ export interface IComment {
     userEmail: string;
     text: string;
     createdAt?: Date;
-    replies?: IComment[];
 }
 
 export interface ICaption {
@@ -40,19 +39,11 @@ export interface IVideo {
     }
 }
 
-// Define reply schema first (simpler structure)
-const replySchema = new Schema({
-    userId: {type: String, required: true},
-    userEmail: {type: String, required: true},
-    text: {type: String, required: true, maxlength: 500},
-}, {timestamps: true});
-
-// Define comment schema with replies array
+// Define comment schema
 const commentSchema = new Schema<IComment>({
     userId: {type: String, required: true},
     userEmail: {type: String, required: true},
     text: {type: String, required: true, maxlength: 500},
-    replies: [replySchema]
 }, {timestamps: true});
 
 const captionSchema = new Schema<ICaption>({

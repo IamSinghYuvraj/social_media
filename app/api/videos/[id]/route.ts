@@ -126,40 +126,6 @@ export async function PUT(
         });
         break;
 
-      case "reply": {
-        const { parentCommentId, text: replyText } = data as { parentCommentId?: string; text?: string };
-        if (!parentCommentId || !replyText || replyText.trim().length === 0) {
-          return NextResponse.json(
-            { error: "parentCommentId and reply text are required" },
-            { status: 400 }
-          );
-        }
-
-        // Find the parent comment and add reply
-        let commentFound = false;
-        for (const comment of video.comments) {
-          if (comment._id && comment._id.toString() === parentCommentId) {
-            if (!comment.replies) {
-              comment.replies = [];
-            }
-            comment.replies.push({
-              userId: session.user.id,
-              userEmail: session.user.email,
-              text: replyText.trim(),
-            });
-            commentFound = true;
-            break;
-          }
-        }
-
-        if (!commentFound) {
-          return NextResponse.json(
-            { error: "Parent comment not found" },
-            { status: 404 }
-          );
-        }
-        break;
-      }
 
       case "update_captions":
         if (video.userId !== session.user.id) {

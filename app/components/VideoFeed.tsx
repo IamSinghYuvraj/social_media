@@ -1,5 +1,5 @@
 // import { IVideo } from "@/models/Video";
-// import VideoComponent from "./VideoComponent";
+// import VideoComponent from "./VideoComponentOptimized";
 // interface VideoFeedProps {
 //   videos: IVideo[];
 // }
@@ -12,7 +12,7 @@
 //         {videos.map((video) => (
 //           <div 
 //             key={video._id?.toString()}           >
-//             <VideoComponent video={video} />
+//             <VideoComponent video={video} isActive={false} />
 //           </div>
 //         ))}
 
@@ -52,7 +52,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IVideo } from "@/models/Video";
-import VideoComponent from "./VideoComponent";
+import VideoComponent from "./VideoComponentOptimized";
 
 interface VideoFeedProps {
   videos: IVideo[];
