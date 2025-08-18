@@ -142,6 +142,31 @@ export async function PUT(
         video.captions = data.captions || [];
         break;
 
+      case "bookmark": {
+        // Toggle bookmark on the Video document (store user IDs who bookmarked)
+        const uid = session.user.id;
+        
+        // Initialize bookmarks array if it doesn't exist
+        if (!video.bookmarks) {
+          video.bookmarks = [];
+        }
+        
+        const isBookmarked = video.bookmarks.includes(uid);
+        console.log("Toggling bookmark for user:", uid, "isBookmarked:", isBookmarked, "current bookmarks:", video.bookmarks);
+        
+        if (isBookmarked) {
+          video.bookmarks = video.bookmarks.filter((id: string) => id !== uid);
+        } else {
+          video.bookmarks.push(uid);
+        }
+        
+        console.log("New bookmarks array:", video.bookmarks);
+        
+        // Explicitly mark the bookmarks field as modified for Mongoose
+        video.markModified('bookmarks');
+        break;
+      }
+
       default:
         return NextResponse.json(
           { error: "Invalid action" },
@@ -149,8 +174,9 @@ export async function PUT(
         );
     }
 
-    await video.save();
-    return NextResponse.json(video);
+    const savedVideo = await video.save();
+    console.log("Video saved successfully, bookmarks:", savedVideo.bookmarks);
+    return NextResponse.json(savedVideo);
   } catch (error) {
     console.error("Error updating video:", error);
     return NextResponse.json(

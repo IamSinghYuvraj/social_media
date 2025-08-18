@@ -17,12 +17,19 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [videos, setVideos] = useState<IVideo[]>([]);
+  const [bookmarkedVideos, setBookmarkedVideos] = useState<IVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{
     username: string;
     profilePicture?: string;
     email: string;
+  } | null>(null);
+  const [userStats, setUserStats] = useState<{
+    videosPosted: number;
+    totalLikes: number;
+    totalComments: number;
+    totalViews: number;
   } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -41,9 +48,17 @@ export default function ProfilePage() {
           setUserProfile(profileData);
         }
         
+        // Fetch user stats
+        const stats = await apiClient.getUserStats();
+        setUserStats(stats);
+        
         // Fetch user videos
         const userVideos = await apiClient.getUserVideos(session.user.id);
         setVideos(userVideos);
+
+        // Fetch bookmarked videos
+        const bVideos = await apiClient.getBookmarkedVideos();
+        setBookmarkedVideos(bVideos);
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError("Failed to load your profile");
@@ -173,19 +188,19 @@ export default function ProfilePage() {
                   <div className="flex items-center space-x-2">
                     <Video className="w-4 h-4 text-purple-500" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      <strong className="text-gray-900 dark:text-white">{videos.length}</strong> Videos
+                      <strong className="text-gray-900 dark:text-white">{userStats?.videosPosted || videos.length}</strong> Videos
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Heart className="w-4 h-4 text-red-500" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      <strong className="text-gray-900 dark:text-white">{getTotalLikes()}</strong> Likes
+                      <strong className="text-gray-900 dark:text-white">{userStats?.totalLikes || getTotalLikes()}</strong> Likes
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <MessageCircle className="w-4 h-4 text-blue-500" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      <strong className="text-gray-900 dark:text-white">{getTotalComments()}</strong> Comments
+                      <strong className="text-gray-900 dark:text-white">{userStats?.totalComments || getTotalComments()}</strong> Comments
                     </span>
                   </div>
                 </div>
@@ -322,6 +337,95 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatDate(video.createdAt || new Date())}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bookmarked Videos Section */}
+          <div className="mt-8 bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-modern-lg border border-gray-200/30 dark:border-gray-800/30 p-6 sm:p-8 backdrop-blur-sm">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6 text-crisp">
+              Bookmarked Videos
+            </h2>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center space-y-4">
+                  <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                  <p className="text-gray-600 dark:text-gray-300">Loading bookmarked videos...</p>
+                </div>
+              </div>
+            ) : bookmarkedVideos.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/20 to-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-pink-500 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2a2 2 0 00-2 2v18l8-5 8 5V4a2 2 0 00-2-2H6z"/></svg>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No bookmarks yet
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">Bookmark videos to see them here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {bookmarkedVideos.map((video) => (
+                  <Link
+                    key={video._id?.toString()}
+                    href={`/video/${video._id}`}
+                    className="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
+                  >
+                    {/* Video Thumbnail */}
+                    <div className="aspect-[9/16] relative overflow-hidden">
+                      <VideoPlayer
+                        urlEndpoint={urlEndpoint}
+                        src={video.videoUrl}
+                        alt={video.caption}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        controls={false}
+                        muted
+                        loop
+                        autoPlay
+                        playsInline
+                        preload="metadata"
+                        poster={video.thumbnailUrl}
+                      />
+
+                      {/* Play Overlay */}
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Video Info */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 text-sm">
+                        {video.caption}
+                      </h3>
+
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-1">
+                            <Heart className="w-3 h-3" />
+                            <span>{video.likes.length}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <MessageCircle className="w-3 h-3" />
+                            <span>{video.comments.length}</span>
+                          </div>
+                        </div>
+
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-3 h-3" />
                           <span>{formatDate(video.createdAt || new Date())}</span>

@@ -29,6 +29,7 @@ export interface IVideo {
     userEmail: string;
     userProfilePicture?: string;
     likes: string[];
+    bookmarks: string[];
     comments: IComment[];
     captions: ICaption[];
     controls?: boolean;
@@ -63,6 +64,7 @@ const videoSchema = new Schema<IVideo>({
     userEmail: {type: String, required: true},
     userProfilePicture: {type: String},
     likes: [{type: String}],
+    bookmarks: [{type: String}],
     comments: [commentSchema],
     captions: [captionSchema],
     controls: {type: Boolean, default: true},

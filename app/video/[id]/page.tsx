@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+
 import { useSession } from "next-auth/react";
 import { IVideo } from "@/models/Video";
 import { apiClient } from "@/lib/api-client";
@@ -10,14 +11,18 @@ import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function VideoPage() {
-  const params = useParams();
+  const params = useParams<{ id: string | string[] }>();
   const router = useRouter();
+
   const { data: session, status } = useSession();
   const [video, setVideo] = useState<IVideo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const videoId = params.id as string;
+  const videoId = useMemo(() => {
+    const raw = params?.id;
+    return Array.isArray(raw) ? raw[0] : raw;
+  }, [params]);
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -36,7 +41,7 @@ export default function VideoPage() {
       }
     };
 
-    if (status !== "loading") {
+    if (status !== "loading" && videoId) {
       fetchVideo();
     }
   }, [videoId, status]);

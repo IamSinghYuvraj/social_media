@@ -73,10 +73,30 @@ class ApiClient {
     });
   }
 
+  async toggleBookmark(videoId: string) {
+    return this.fetch<IVideo>(`/videos/${videoId}`, {
+      method: "PUT",
+      body: { action: "bookmark" },
+    });
+  }
+
+  async getBookmarkedVideos() {
+    return this.fetch<IVideo[]>(`/videos/bookmarked`);
+  }
+
   async deleteVideo(videoId: string) {
     return this.fetch<{ success: boolean }>(`/videos/${videoId}`, {
       method: "DELETE",
     });
+  }
+
+  async getUserStats() {
+    return this.fetch<{
+      videosPosted: number;
+      totalLikes: number;
+      totalComments: number;
+      totalViews: number;
+    }>("/user/stats");
   }
 }
 

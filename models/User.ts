@@ -6,6 +6,13 @@ export interface IUser {
     password: string;
     username: string;
     profilePicture?: string;
+    bookmarks?: string[];
+    stats?: {
+        videosPosted: number;
+        totalLikes: number;
+        totalComments: number;
+        totalViews: number;
+    };
     _id?: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
@@ -17,6 +24,13 @@ const userSchema = new Schema<IUser>(
         password: {type: String, required: true},
         username: {type: String, required: true, unique: true, minlength: 3, maxlength: 30},
         profilePicture: {type: String},
+        bookmarks: [{ type: String }],
+        stats: {
+            videosPosted: {type: Number, default: 0},
+            totalLikes: {type: Number, default: 0},
+            totalComments: {type: Number, default: 0},
+            totalViews: {type: Number, default: 0}
+        }
     },
     {
         timestamps: true

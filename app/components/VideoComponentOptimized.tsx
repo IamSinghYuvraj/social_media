@@ -5,14 +5,12 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
 import { useNotification } from "./Notification";
-import Link from "next/link";
 import {
   Heart,
   MessageCircle,
   Share,
   Bookmark,
   User,
-  MoreHorizontal,
   Play,
   Send,
   X,
@@ -26,11 +24,11 @@ interface VideoComponentProps {
   isActive?: boolean;
 }
 
-const VideoComponent = memo(function VideoComponent({ 
+const VideoComponent = memo(({ 
   video, 
-  onVideoUpdate, 
-  isActive 
-}: VideoComponentProps) {
+  onVideoUpdate = () => {}, 
+  isActive = false 
+}: VideoComponentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [localVideo, setLocalVideo] = useState(() => ({
@@ -111,6 +109,35 @@ const VideoComponent = memo(function VideoComponent({
     })();
     return () => { isMounted = false; };
   }, []);
+
+  // Initialize bookmark state for this video
+  useEffect(() => {
+    if (!session?.user || !localVideo._id) return;
+    
+    let isMounted = true;
+    (async () => {
+      try {
+        // Check if current user's ID is in the video's bookmarks array
+        const videoData = await apiClient.getVideo(localVideo._id!.toString());
+        if (!isMounted) return;
+        const isBookmarkedByUser = (videoData.bookmarks || []).includes(session.user.id);
+        setIsBookmarked(isBookmarkedByUser);
+        console.log("Bookmark state for video:", localVideo._id, "isBookmarked:", isBookmarkedByUser);
+      } catch (error) {
+        console.error("Error checking bookmark state:", error);
+        // Fallback: check via bookmarked videos list
+        try {
+          const list = await apiClient.getBookmarkedVideos();
+          if (!isMounted) return;
+          const found = !!list.find(v => v._id?.toString() === localVideo._id?.toString());
+          setIsBookmarked(found);
+        } catch {
+          // ignore
+        }
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [localVideo._id, session?.user]);
 
   // Optimized video play/pause with intersection observer
   useEffect(() => {
@@ -323,23 +350,7 @@ const VideoComponent = memo(function VideoComponent({
           </div>
         )}
 
-        {/* More Options */}
-        <button
-          className="absolute top-3 right-3 bg-black/50 p-1 rounded-full hover:bg-black/70 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MoreHorizontal className="w-5 h-5 text-white" />
-        </button>
-
-        {/* Video Link */}
-        {localVideo._id && (
-          <Link
-            href={`/video/${localVideo._id}`}
-            className="absolute top-3 left-3 bg-black/50 px-2 py-1 rounded-full text-white text-xs hover:bg-black/70 z-10"
-          >
-            View
-          </Link>
-        )}
+        {/* Removed 'More Options' and 'View' link as requested */}
 
         {/* Overlay Info */}
         <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/60 via-black/20 to-transparent">
@@ -360,13 +371,9 @@ const VideoComponent = memo(function VideoComponent({
             </div>
             <div>
               <p className="text-sm font-semibold">@{getUsernameFromEmail(localVideo.userEmail)}</p>
-              <p className="text-xs text-gray-300">
-                {formatTimeAgo(localVideo.createdAt)}
-              </p>
+              <p className="text-xs text-gray-300">{formatTimeAgo(localVideo.createdAt)}</p>
             </div>
           </div>
-
-          <p className="text-sm text-gray-200 mb-4">{localVideo.caption}</p>
 
           <div className="flex items-center justify-between">
             <div className="flex space-x-4">
@@ -381,8 +388,8 @@ const VideoComponent = memo(function VideoComponent({
                 <span className="text-sm">{localVideo.likes.length}</span>
               </button>
 
-              <button 
-                onClick={() => setShowComments(!showComments)}
+              <button
+                onClick={() => setShowComments(true)}
                 className="flex items-center space-x-1 text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 <MessageCircle className="w-5 h-5" />
@@ -396,7 +403,32 @@ const VideoComponent = memo(function VideoComponent({
             </div>
 
             <button
-              onClick={() => setIsBookmarked(!isBookmarked)}
+              onClick={async () => {
+                if (!session?.user) return;
+                const next = !isBookmarked;
+                setIsBookmarked(next);
+                console.log("Toggling bookmark, new state:", next, "for video:", localVideo._id);
+                try {
+                  const updatedVideo = await apiClient.toggleBookmark(localVideo._id!.toString());
+                  console.log("Bookmark toggle response:", updatedVideo);
+                  // Update local video state with the response
+                  const safeUpdatedVideo = {
+                    ...updatedVideo,
+                    likes: updatedVideo.likes || [],
+                    comments: updatedVideo.comments || localVideo.comments,
+                    userEmail: updatedVideo.userEmail || localVideo.userEmail,
+                    caption: updatedVideo.caption || localVideo.caption,
+                    createdAt: updatedVideo.createdAt || localVideo.createdAt
+                  };
+                  setLocalVideo(safeUpdatedVideo);
+                  onVideoUpdate?.(safeUpdatedVideo);
+                  showNotification(next ? "Added to bookmarks" : "Removed from bookmarks", "success");
+                } catch (error) {
+                  console.error("Bookmark toggle failed:", error);
+                  setIsBookmarked(!next);
+                  showNotification("Failed to update bookmark", "error");
+                }
+              }}
               className={`transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"}`}
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
@@ -404,92 +436,94 @@ const VideoComponent = memo(function VideoComponent({
           </div>
         </div>
       </div>
-
-      {/* Comments Side Panel - Separate from video */}
-      {showComments && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowComments(false)}
-          />
+      
+      {/* Comments Drawer */}
+    {showComments && (
+      <div className="fixed inset-0 z-30 flex items-start justify-end">
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowComments(false)}
+        />
+        
+        {/* Comments Panel */}
+        <div className="relative ml-auto w-full max-w-md h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
+              Comments ({localVideo.comments.length})
+            </h3>
+            <button
+              onClick={() => setShowComments(false)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
           
-          {/* Comments Panel */}
-          <div className="relative ml-auto w-full max-w-md h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
-                Comments ({localVideo.comments.length})
-              </h3>
-              <button
-                onClick={() => setShowComments(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+          {/* Comments List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
+            {renderComments(localVideo.comments)}
             
-            {/* Comments List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
-              {renderComments(localVideo.comments)}
-              
-              {localVideo.comments.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-lg font-medium mb-1">No comments yet</p>
-                  <p className="text-sm">Be the first to comment!</p>
-                </div>
-              )}
-            </div>
-            
-            {/* Comment Input */}
-            {session?.user && (
-              <form onSubmit={handleComment} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                <div className="flex space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {session.user.image || currentUserProfilePicture ? (
-                      <Image 
-                        src={(session.user.image || currentUserProfilePicture) as string} 
-                        alt={`${session.user.name || session.user.email} profile`}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <User className="text-white w-4 h-4" />
-                    )}
-                  </div>
-                  <div className="flex-1 flex space-x-2">
-                    <input
-                      type="text"
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Add a comment..."
-                      className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-200 dark:border-gray-700"
-                      maxLength={500}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newComment.trim() || isSubmittingComment}
-                      className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl transition-colors flex items-center justify-center"
-                    >
-                      {isSubmittingComment ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
+            {localVideo.comments.length === 0 && (
+              <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-lg font-medium mb-1">No comments yet</p>
+                <p className="text-sm">Be the first to comment!</p>
+              </div>
             )}
           </div>
+          
+          {/* Comment Input */}
+          {session?.user && (
+            <form onSubmit={handleComment} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <div className="flex space-x-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {session.user.image || currentUserProfilePicture ? (
+                    <Image 
+                      src={(session.user.image || currentUserProfilePicture) as string} 
+                      alt={`${session.user.name || session.user.email} profile`}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <User className="text-white w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1 flex space-x-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Add a comment..."
+                    className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-200 dark:border-gray-700"
+                    maxLength={500}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || isSubmittingComment}
+                    className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl transition-colors flex items-center justify-center"
+                  >
+                    {isSubmittingComment ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
   );
 });
+
+VideoComponent.displayName = 'VideoComponent';
 
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
