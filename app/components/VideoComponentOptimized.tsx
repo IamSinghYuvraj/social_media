@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, useCallback, memo } from "react";
-import { IVideo, IComment, ICaption } from "@/models/Video";
+import { useRef, useState, useEffect, useCallback, memo, useMemo } from "react";
+import { IVideo, IComment } from "@/models/Video";
 import { Video } from "@imagekit/next";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -45,7 +45,7 @@ const VideoComponent = memo(function VideoComponent({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
-  const captions: ICaption[] = (localVideo as IVideo).captions || [];
+  const captions = useMemo(() => (localVideo as IVideo).captions || [], [localVideo]);
   
   const { data: session } = useSession();
   const { showNotification } = useNotification();
@@ -376,6 +376,7 @@ const VideoComponent = memo(function VideoComponent({
         {/* Removed 'More Options' and 'View' link as requested */}
 
         {/* Overlay Info */}
+        {/* Overlay Info */}
         <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/60 via-black/20 to-transparent">
           <div className="flex items-center mb-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3 overflow-hidden">
@@ -397,6 +398,9 @@ const VideoComponent = memo(function VideoComponent({
               <p className="text-xs text-gray-300">{formatTimeAgo(localVideo.createdAt)}</p>
             </div>
           </div>
+          
+          {/* Video Caption */}
+          <p className="text-sm mb-3 line-clamp-2">{localVideo.caption}</p>
 
           <div className="flex items-center justify-between">
             <div className="flex space-x-4">
