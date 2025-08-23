@@ -56,7 +56,7 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div className="fixed inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 relative overflow-hidden z-40" style={{ width: '100vw', height: '100vh', minHeight: '100vh', minWidth: '100vw' }}>
+      <div className="fixed inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-pink-900 overflow-hidden z-40" style={{ width: '100vw', height: '100vh', minHeight: '100vh', minWidth: '100vw' }}>
         {/* Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse"></div>
@@ -149,7 +149,7 @@ export default function Home() {
   // Show empty state
   if (videos.length === 0) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black dark:bg-black relative z-40">
+      <div className="fixed inset-0 flex items-center justify-center bg-black dark:bg-black z-40">
         {/* Floating Upload Button */}
         <Link
           href="/upload"

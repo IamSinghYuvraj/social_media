@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useNotification } from "../components/Notification";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, Camera, Sparkles, User } from "lucide-react";
+import Image from "next/image";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -104,7 +105,7 @@ export default function Register() {
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                   {profilePicture ? (
-                    <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                    <Image src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-8 h-8 text-white" />
                   )}

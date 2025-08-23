@@ -67,7 +67,7 @@ export default function VideoUploadForm() {
 
     setLoading(true);
     try {
-      await apiClient.createVideo({ ...data, captions });
+      await apiClient.createVideo({ ...data, captions, bookmarks: [] });
       showNotification("🚀 Video published successfully! Your video is now live.", "success");
 
       // Reset form after successful submission
