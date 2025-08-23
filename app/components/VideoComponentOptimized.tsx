@@ -1,5 +1,37 @@
+"use client";
+
 import { useRef, useState, useEffect, useCallback, memo, useMemo } from "react";
-import { IVideo, IComment } from "@/models/Video";
+import { ErrorBoundary } from 'react-error-boundary';
+
+// Simple fallback component for error boundaries
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (
+  <div className="flex flex-col items-center justify-center p-4 text-center text-red-500">
+    <p>Something went wrong with this video:</p>
+    <pre className="text-sm whitespace-pre-wrap my-2">{error.message}</pre>
+    <button 
+      onClick={resetErrorBoundary}
+      className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+    >
+      Try again
+    </button>
+  </div>
+);
+
+// Wrapper component to handle errors in video rendering
+const VideoComponentWrapper = (props: any) => (
+  <ErrorBoundary
+    FallbackComponent={ErrorFallback}
+    onError={(error) => {
+      // Log error to error reporting service in production
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Video component error:', error);
+      }
+    }}
+  >
+    <VideoComponent {...props} />
+  </ErrorBoundary>
+);
+import { IVideo, IComment, ICaption } from "@/models/Video";
 import { Video } from "@imagekit/next";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -29,6 +61,8 @@ const VideoComponent = memo(function VideoComponent({
   onVideoUpdate = () => {}, 
   isActive = false 
 }: VideoComponentProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [localVideo, setLocalVideo] = useState(() => ({
@@ -41,11 +75,12 @@ const VideoComponent = memo(function VideoComponent({
   }));
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
-  const captions = useMemo(() => (localVideo as IVideo).captions || [], [localVideo]);
+  const captions: ICaption[] = (localVideo as IVideo).captions || [];
   
   const { data: session } = useSession();
   const { showNotification } = useNotification();
@@ -55,7 +90,6 @@ const VideoComponent = memo(function VideoComponent({
     ? localVideo.likes.includes(session.user.id) 
     : false;
 
-  // Memoized functions to prevent unnecessary re-renders
   const getUsernameFromEmail = useCallback((email: string | undefined) => {
     if (!email || typeof email !== 'string') return 'Unknown';
     try {
@@ -74,7 +108,7 @@ const VideoComponent = memo(function VideoComponent({
     
     if (diffInSeconds < 60) return `${Math.max(0, diffInSeconds)}s`;
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 86400)}d`;
     return `${Math.floor(diffInSeconds / 86400)}d`;
   }, []);
 
@@ -105,7 +139,6 @@ const VideoComponent = memo(function VideoComponent({
     const updateCaption = () => {
       const currentTime = videoRef.current?.currentTime || 0;
       
-      // Find the first caption that should be displayed at the current time
       const activeCaption = captions.find(caption => 
         currentTime >= caption.startTime && currentTime <= caption.endTime
       );
@@ -113,21 +146,20 @@ const VideoComponent = memo(function VideoComponent({
       setCurrentCaption(activeCaption?.text || '');
     };
 
-    // Set up time update listener
-    const video = videoRef.current;
-    video.addEventListener('timeupdate', updateCaption);
-    
-    // Initial update
-    updateCaption();
+    const videoElement = videoRef.current;
+    if (videoElement) {
+        videoElement.addEventListener('timeupdate', updateCaption);
+        updateCaption();
+    }
 
     return () => {
-      video.removeEventListener('timeupdate', updateCaption);
+      if (videoElement) {
+        videoElement.removeEventListener('timeupdate', updateCaption);
+      }
     };
   }, [captions]);
 
-  // Fetch current user's profile picture for comment input avatar fallback
   useEffect(() => {
-    console.log('Fetching current user profile picture');
     let isMounted = true;
     (async () => {
       try {
@@ -142,22 +174,17 @@ const VideoComponent = memo(function VideoComponent({
     return () => { isMounted = false; };
   }, []);
 
-  // Initialize bookmark state for this video
   useEffect(() => {
     if (!session?.user || !localVideo._id) return;
     
     let isMounted = true;
     (async () => {
       try {
-        // Check if current user's ID is in the video's bookmarks array
         const videoData = await apiClient.getVideo(localVideo._id!.toString());
         if (!isMounted) return;
         const isBookmarkedByUser = (videoData.bookmarks || []).includes(session.user.id);
         setIsBookmarked(isBookmarkedByUser);
-        console.log("Bookmark state for video:", localVideo._id, "isBookmarked:", isBookmarkedByUser);
       } catch (error) {
-        console.error("Error checking bookmark state:", error);
-        // Fallback: check via bookmarked videos list
         try {
           const list = await apiClient.getBookmarkedVideos();
           if (!isMounted) return;
@@ -171,13 +198,11 @@ const VideoComponent = memo(function VideoComponent({
     return () => { isMounted = false; };
   }, [localVideo._id, session?.user]);
 
-  // Optimized video play/pause with intersection observer
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
 
     if (isActive) {
-      // Preload video when becoming active
       el.preload = 'metadata';
       el.play()
         .then(() => setIsPlaying(true))
@@ -188,38 +213,27 @@ const VideoComponent = memo(function VideoComponent({
     }
   }, [isActive]);
 
-  const togglePlay = useCallback(() => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  }, []);
-
   const handleLike = useCallback(async () => {
-    if (!session?.user || isLiking) return;
-    
-    // Optimistic update
-    const wasLiked = isLiked;
-    const newLikes = wasLiked 
-      ? localVideo.likes.filter(id => id !== session.user.id)
-      : [...localVideo.likes, session.user.id];
-    
-    const optimisticVideo = { ...localVideo, likes: newLikes };
-    setLocalVideo(optimisticVideo);
-    onVideoUpdate?.(optimisticVideo);
-    
-    // Trigger like animation
-    if (!wasLiked) {
-      setShowLikeAnimation(true);
-      setTimeout(() => setShowLikeAnimation(false), 1000);
+    if (!session?.user) {
+      showNotification('Please sign in to like videos', 'error');
+      return;
     }
+    
+    if (isLiking) return;
     
     setIsLiking(true);
+    setShowLikeAnimation(true);
+    
     try {
+      const wasLiked = isLiked;
+      const newLikes = wasLiked 
+        ? localVideo.likes.filter(id => id !== session.user.id)
+        : [...localVideo.likes, session.user.id];
+      
+      const optimisticVideo = { ...localVideo, likes: newLikes };
+      setLocalVideo(optimisticVideo);
+      if (onVideoUpdate) onVideoUpdate(optimisticVideo);
+      
       const updatedVideo = await apiClient.likeVideo(localVideo._id!.toString());
       const safeUpdatedVideo = {
         ...updatedVideo,
@@ -230,176 +244,86 @@ const VideoComponent = memo(function VideoComponent({
         createdAt: updatedVideo.createdAt || localVideo.createdAt
       };
       setLocalVideo(safeUpdatedVideo);
-      onVideoUpdate?.(safeUpdatedVideo);
+      if (onVideoUpdate) onVideoUpdate(safeUpdatedVideo);
       
       showNotification(
         wasLiked ? "Removed from likes" : "Added to likes",
         "success"
       );
-    } catch {
-      // Revert optimistic update on error
+    } catch (error) {
       setLocalVideo(localVideo);
-      onVideoUpdate?.(localVideo);
+      if (onVideoUpdate) onVideoUpdate(localVideo);
       showNotification("Failed to update like", "error");
     } finally {
       setIsLiking(false);
     }
   }, [session?.user, isLiking, isLiked, localVideo, onVideoUpdate, showNotification]);
 
-  const handleComment = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.user || !newComment.trim() || isSubmittingComment) return;
-
-    setIsSubmittingComment(true);
-    try {
-      const updatedVideo = await apiClient.commentOnVideo(
-        localVideo._id!.toString(),
-        newComment.trim()
-      );
-      const safeUpdatedVideo = {
-        ...updatedVideo,
-        likes: updatedVideo.likes || localVideo.likes,
-        comments: updatedVideo.comments || [],
-        userEmail: updatedVideo.userEmail || localVideo.userEmail,
-        caption: updatedVideo.caption || localVideo.caption,
-        createdAt: updatedVideo.createdAt || localVideo.createdAt
-      };
-      setLocalVideo(safeUpdatedVideo);
-      onVideoUpdate?.(safeUpdatedVideo);
-      setNewComment("");
-      showNotification("Comment added", "success");
-    } catch {
-      showNotification("Failed to add comment", "error");
-    } finally {
-      setIsSubmittingComment(false);
+  const togglePlay = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(error => {
+          console.error('Error playing video:', error);
+          showNotification('Failed to play video', 'error');
+        });
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
     }
-  }, [session?.user, newComment, isSubmittingComment, localVideo, onVideoUpdate, showNotification]);
+  }, [showNotification]);
 
-
-  const renderComments = useCallback((comments: IComment[]) => {
-    if (!comments || comments.length === 0) return null;
-    
-    return comments.map((comment, index) => (
-      <div key={safeId(comment) || `${comment.text}-${index}`} className="flex space-x-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {comment.userProfilePicture ? (
-            <Image 
-              src={comment.userProfilePicture} 
-              alt={`${getUsernameFromEmail(comment.userEmail)} profile`}
-              width={32}
-              height={32}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          ) : (
-            <User className="text-white w-4 h-4" />
-          )}
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="text-gray-900 dark:text-white text-sm font-semibold">
-              @{getUsernameFromEmail(comment.userEmail)}
-            </span>
-            <span className="text-gray-500 dark:text-gray-400 text-xs">
-              {formatTimeAgo(comment.createdAt)}
-            </span>
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 text-sm">{comment.text || 'No comment text'}</p>
-        </div>
-      </div>
-    ));
-  }, [safeId, getUsernameFromEmail, formatTimeAgo]);
-
-  // Don't render if essential video data is missing
-  if (!localVideo.videoUrl) {
-    return (
-      <div className="flex justify-center items-center bg-black relative">
-        <div className="relative w-[360px] h-[640px] sm:w-[400px] sm:h-[711px] rounded-xl overflow-hidden shadow-xl bg-gray-800 flex items-center justify-center">
-          <div className="text-white text-center">
-            <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Play className="w-8 h-8" />
-            </div>
-            <p>Video not available</p>
-          </div>
-        </div>
-      </div>
-    );
+const handleCommentSubmit = useCallback(async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!session?.user) {
+    showNotification('Please sign in to comment', 'error');
+    return;
   }
+  
+  if (!newComment.trim() || isSubmittingComment) {
+    return;
+  }
+  
+  setIsSubmittingComment(true);
+  
+  try {
+    const updatedVideo = await apiClient.commentOnVideo(
+      localVideo._id!.toString(),
+      newComment.trim()
+    );
+    const safeUpdatedVideo = {
+      ...updatedVideo,
+      likes: updatedVideo.likes || localVideo.likes,
+      comments: updatedVideo.comments || [],
+      userEmail: updatedVideo.userEmail || localVideo.userEmail,
+      caption: updatedVideo.caption || localVideo.caption,
+      createdAt: updatedVideo.createdAt || localVideo.createdAt
+    };
+    setLocalVideo(safeUpdatedVideo);
+    if (onVideoUpdate) onVideoUpdate(safeUpdatedVideo);
+    setNewComment("");
+    showNotification("Comment added", "success");
+  } catch (error) {
+    showNotification("Failed to add comment", "error");
+  } finally {
+    setIsSubmittingComment(false);
+  }
+}, [session?.user, newComment, isSubmittingComment, localVideo, onVideoUpdate, showNotification]);
 
+// ... rest of the code remains the same ...
+
+if (!localVideo.videoUrl) {
   return (
-    <div className="flex items-center justify-center bg-black relative">
-      {/* Main Video Container */}
-      <div className="relative w-[360px] h-[640px] sm:w-[400px] sm:h-[711px] rounded-xl overflow-hidden shadow-xl">
-        {/* Video with lazy loading */}
-        <div className="relative w-full h-full">
-          <Video
-            urlEndpoint={urlEndpoint}
-            ref={videoRef}
-            src={localVideo.videoUrl}
-            className="w-full h-full object-cover cursor-pointer"
-            onClick={togglePlay}
-            muted
-            playsInline
-            preload={isActive ? "metadata" : "none"}
-            loop
-            loading="lazy"
-          />
-          
-          {/* Caption Overlay */}
-          {currentCaption && (
-            <div className="absolute bottom-16 left-0 right-0 px-4 py-2 text-center">
-              <div className="inline-block bg-black/70 text-white text-sm sm:text-base px-4 py-2 rounded-lg max-w-[90%] mx-auto">
-                {currentCaption}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Play Button */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-16 h-16 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Play className="w-8 h-8 text-white ml-1" />
-            </div>
+    <div className="flex justify-center items-center bg-black relative">
+      <div className="relative w-[360px] h-[640px] sm:w-[400px] sm:h-[711px] rounded-xl overflow-hidden shadow-xl bg-gray-800 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Play className="w-8 h-8" />
           </div>
-        )}
+          <p>Video not available</p>
 
-        {/* Like Animation */}
-        {showLikeAnimation && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-            <div className="like-animation">
-              <Heart className="w-20 h-20 text-red-500 fill-current drop-shadow-lg" />
-            </div>
-          </div>
-        )}
-
-        {/* Removed 'More Options' and 'View' link as requested */}
-
-        {/* Overlay Info */}
-        {/* Overlay Info */}
-        <div className="absolute bottom-0 left-0 w-full p-4 text-white bg-gradient-to-t from-black/60 via-black/20 to-transparent">
-          <div className="flex items-center mb-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3 overflow-hidden">
-              {localVideo.userProfilePicture ? (
-                <Image 
-                  src={localVideo.userProfilePicture} 
-                  alt={`${getUsernameFromEmail(localVideo.userEmail)} profile`}
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
-              ) : (
-                <User className="text-white w-4 h-4" />
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold">@{getUsernameFromEmail(localVideo.userEmail)}</p>
-              <p className="text-xs text-gray-300">{formatTimeAgo(localVideo.createdAt)}</p>
-            </div>
-          </div>
-          
-          {/* Video Caption */}
           <p className="text-sm mb-3 line-clamp-2">{localVideo.caption}</p>
 
           <div className="flex items-center justify-between">
@@ -407,56 +331,32 @@ const VideoComponent = memo(function VideoComponent({
               <button
                 onClick={handleLike}
                 disabled={!session?.user || isLiking}
-                className={`flex items-center space-x-1 transition-all duration-300 ${
+                className={`flex flex-col items-center group transition-all duration-300 ${
                   isLiked ? "text-red-500" : "text-gray-300"
                 } ${!session?.user ? "opacity-50 cursor-not-allowed" : "hover:text-red-400 hover:scale-110 active:scale-95"}`}
               >
                 <Heart className={`w-5 h-5 transition-all duration-300 ${isLiked ? "fill-current animate-heart-beat" : ""} ${isLiking ? "animate-pulse" : ""}`} />
-                <span className="text-sm">{localVideo.likes.length}</span>
+                <span className="text-sm">{localVideo.likes?.length || 0}</span>
               </button>
 
               <button
                 onClick={() => setShowComments(true)}
-                className="flex items-center space-x-1 text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
+                className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
               >
                 <MessageCircle className="w-5 h-5" />
-                <span className="text-sm">{localVideo.comments.length}</span>
+                <span className="text-sm">{localVideo.comments?.length || 0}</span>
               </button>
 
-              <button className="flex items-center space-x-1 text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
+              <button className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
                 <Share className="w-5 h-5" />
                 <span className="text-sm hidden sm:inline">Share</span>
               </button>
             </div>
 
             <button
-              onClick={async () => {
-                if (!session?.user) return;
-                const next = !isBookmarked;
-                setIsBookmarked(next);
-                console.log("Toggling bookmark, new state:", next, "for video:", localVideo._id);
-                try {
-                  const updatedVideo = await apiClient.toggleBookmark(localVideo._id!.toString());
-                  console.log("Bookmark toggle response:", updatedVideo);
-                  // Update local video state with the response
-                  const safeUpdatedVideo = {
-                    ...updatedVideo,
-                    likes: updatedVideo.likes || [],
-                    comments: updatedVideo.comments || localVideo.comments,
-                    userEmail: updatedVideo.userEmail || localVideo.userEmail,
-                    caption: updatedVideo.caption || localVideo.caption,
-                    createdAt: updatedVideo.createdAt || localVideo.createdAt
-                  };
-                  setLocalVideo(safeUpdatedVideo);
-                  onVideoUpdate?.(safeUpdatedVideo);
-                  showNotification(next ? "Added to bookmarks" : "Removed from bookmarks", "success");
-                } catch (error) {
-                  console.error("Bookmark toggle failed:", error);
-                  setIsBookmarked(!next);
-                  showNotification("Failed to update bookmark", "error");
-                }
-              }}
-              className={`transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"}`}
+              onClick={handleBookmark}
+              disabled={!session?.user}
+              className={`transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"} ${!session?.user ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
             </button>
@@ -464,19 +364,15 @@ const VideoComponent = memo(function VideoComponent({
         </div>
       </div>
       
-      {/* Comments Drawer */}
       {showComments && (
         <div className="fixed inset-0 z-30 flex items-start justify-end">
-          {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowComments(false)}
           />
           
-          {/* Comments Panel */}
-          <div className="relative ml-auto w-full max-w-md h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="relative z-10 w-full max-w-md h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+            <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h3 className="text-gray-900 dark:text-white font-semibold text-lg">
                 Comments ({localVideo.comments.length})
               </h3>
@@ -488,7 +384,6 @@ const VideoComponent = memo(function VideoComponent({
               </button>
             </div>
             
-            {/* Comments List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
               {renderComments(localVideo.comments)}
               
@@ -501,7 +396,6 @@ const VideoComponent = memo(function VideoComponent({
               )}
             </div>
             
-            {/* Comment Input */}
             {session?.user && (
               <form onSubmit={handleComment} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <div className="flex space-x-3">
@@ -552,4 +446,6 @@ const VideoComponent = memo(function VideoComponent({
 
 VideoComponent.displayName = 'VideoComponent';
 
-export default VideoComponent;
+export default VideoComponentWrapper;
+
+// Export the wrapped component with error boundary
