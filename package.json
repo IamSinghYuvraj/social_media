@@ -21,7 +21,8 @@
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.61.1",
+    "react-error-boundary": "^6.0.0",
+    "react-hook-form": "^7.62.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
