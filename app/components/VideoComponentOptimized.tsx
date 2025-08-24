@@ -476,55 +476,57 @@ const VideoComponent = memo(function VideoComponent({
       )}
 
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0 mr-4">
-            <div className="flex items-center space-x-2 mb-2">
+        <div className="flex items-end">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2 mb-1">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                 <User className="text-white w-4 h-4" />
               </div>
               <span className="text-white font-medium text-sm">
                 @{getUsernameFromEmail(localVideo.userEmail)}
               </span>
-              <span className="text-gray-400 text-xs">
+              <span className="text-gray-300 text-xs">
                 {formatTimeAgo(localVideo.createdAt)}
               </span>
             </div>
 
-            <p className="text-white text-sm mb-3 line-clamp-2">{localVideo.caption}</p>
-          </div>
+            <p className="text-white text-sm mb-2 line-clamp-2">{localVideo.caption}</p>
 
-          <div className="flex flex-col space-y-4 flex-shrink-0">
-            <button
-              onClick={handleLike}
-              disabled={!session?.user || isLiking}
-              className={`flex flex-col items-center group transition-all duration-300 ${
-                isLiked ? "text-red-500" : "text-gray-300"
-              } ${!session?.user ? "opacity-50 cursor-not-allowed" : "hover:text-red-400 hover:scale-110 active:scale-95"}`}
-            >
-              <Heart className={`w-6 h-6 transition-all duration-300 ${isLiked ? "fill-current animate-pulse" : ""} ${isLiking ? "animate-pulse" : ""}`} />
-              <span className="text-xs mt-1">{localVideo.likes?.length || 0}</span>
-            </button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-5">
+                <button
+                  onClick={handleLike}
+                  disabled={!session?.user || isLiking}
+                  className={`flex items-center space-x-1 group transition-all duration-300 ${
+                    isLiked ? "text-red-500" : "text-gray-300"
+                  } ${!session?.user ? "opacity-50 cursor-not-allowed" : "hover:text-red-400 hover:scale-110 active:scale-95"}`}
+                >
+                  <Heart className={`w-6 h-6 transition-all duration-300 ${isLiked ? "fill-current animate-pulse" : ""} ${isLiking ? "animate-pulse" : ""}`} />
+                  <span className="text-xs">{localVideo.likes?.length || 0}</span>
+                </button>
 
-            <button
-              onClick={() => setShowComments(true)}
-              className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
-            >
-              <MessageCircle className="w-6 h-6" />
-              <span className="text-xs mt-1">{localVideo.comments?.length || 0}</span>
-            </button>
+                <button
+                  onClick={() => setShowComments(true)}
+                  className="flex items-center space-x-1 group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  <span className="text-xs">{localVideo.comments?.length || 0}</span>
+                </button>
 
-            <button className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
-              <Share className="w-6 h-6" />
-              <span className="text-xs mt-1">Share</span>
-            </button>
+                <button className="flex items-center space-x-1 group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
+                  <Share className="w-6 h-6" />
+                  <span className="text-xs">Share</span>
+                </button>
+              </div>
 
-            <button
-              onClick={handleBookmark}
-              disabled={!session?.user}
-              className={`transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"} ${!session?.user ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
-            </button>
+              <button
+                onClick={handleBookmark}
+                disabled={!session?.user}
+                className={`flex items-center group transition-all duration-300 hover:scale-110 active:scale-95 ${isBookmarked ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"} ${!session?.user ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
