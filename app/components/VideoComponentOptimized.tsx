@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback, memo } from "react";
+import { useRef, useState, useEffect, useCallback, memo, type ReactNode } from "react";
 import { IVideo, IComment } from "@/models/Video";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -15,6 +15,10 @@ import {
   Play,
   Send,
   X,
+  Mail,
+  Facebook,
+  Twitter,
+  Copy as CopyIcon,
 } from "lucide-react";
 
 interface VideoComponentProps {
@@ -46,6 +50,7 @@ const VideoComponent = memo(function VideoComponent({
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [currentCaption] = useState<string>('');
+  const [showShare, setShowShare] = useState(false);
 
   const { data: session } = useSession();
   const { showNotification } = useNotification();
@@ -192,6 +197,16 @@ const VideoComponent = memo(function VideoComponent({
     }
   }, [showNotification]);
 
+  const handleOpenShare = useCallback(() => {
+    const url = (typeof window !== 'undefined' ? (localVideo.videoUrl || window.location.href) : localVideo.videoUrl) || '';
+    const title = localVideo.caption || 'Check out this video';
+    if (navigator.share && url) {
+      navigator.share({ title, url }).catch(() => setShowShare(true));
+      return;
+    }
+    setShowShare(true);
+  }, [localVideo.videoUrl, localVideo.caption]);
+
   const handleBookmark = useCallback(async () => {
     if (!session?.user) {
       showNotification('Please sign in to bookmark videos', 'error');
@@ -223,6 +238,47 @@ const VideoComponent = memo(function VideoComponent({
       showNotification("Failed to update bookmark", "error");
     }
   }, [session?.user, isBookmarked, localVideo._id, showNotification]);
+
+  // Share helpers
+  const getShareableUrl = useCallback((url?: string) => {
+    if (!url) {
+      if (typeof window !== 'undefined') return window.location.href;
+      return '';
+    }
+    if (/^https?:\/\//i.test(url)) return url;
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      return url.startsWith('/') ? `${origin}${url}` : `${origin}/${url}`;
+    }
+    return url;
+  }, []);
+
+  const openUrl = useCallback((url: string) => {
+    if (!url) return;
+    window.open(url, '_blank');
+  }, []);
+
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showNotification('Link copied to clipboard', 'success');
+    } catch {
+      showNotification('Failed to copy link', 'error');
+    }
+  }, [showNotification]);
+
+  // Small share item component for the modal grid
+  const ShareItem = ({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) => (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 transition"
+    >
+      <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow">
+        {children}
+      </div>
+      <span className="text-xs">{label}</span>
+    </button>
+  );
 
   const handleCommentSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,7 +387,10 @@ const VideoComponent = memo(function VideoComponent({
                   <span className="text-sm">{localVideo.comments?.length || 0}</span>
                 </button>
 
-                <button className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
+                <button
+                  onClick={handleOpenShare}
+                  className="flex flex-col items-center group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
+                >
                   <Share className="w-5 h-5" />
                   <span className="text-sm hidden sm:inline">Share</span>
                 </button>
@@ -513,10 +572,13 @@ const VideoComponent = memo(function VideoComponent({
                   <span className="text-xs">{localVideo.comments?.length || 0}</span>
                 </button>
 
-                <button className="flex items-center space-x-1 group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95">
-                  <Share className="w-6 h-6" />
-                  <span className="text-xs">Share</span>
-                </button>
+                <button
+                onClick={handleOpenShare}
+                className="flex items-center space-x-1 group text-gray-300 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95"
+              >
+                <Share className="w-6 h-6" />
+                <span className="text-xs">Share</span>
+              </button>
               </div>
 
               <button
@@ -614,6 +676,53 @@ const VideoComponent = memo(function VideoComponent({
           onAnimationEnd={() => setShowLikeAnimation(false)}
         >
           <Heart className="w-20 h-20 text-red-500 fill-current animate-bounce" />
+        </div>
+      )}
+
+      {showShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowShare(false)} />
+          <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+              <h4 className="text-gray-900 dark:text-white font-semibold">Share</h4>
+              <button onClick={() => setShowShare(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-5 gap-4 mb-4">
+                <ShareItem label="WhatsApp" onClick={() => openUrl(`https://wa.me/?text=${encodeURIComponent(getShareableUrl(localVideo.videoUrl))}`)}>
+                  {/* Simple WhatsApp logo */}
+                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor"><path d="M20.52 3.48A11.94 11.94 0 0 0 12.06 0C5.5 0 .2 5.3.2 11.86c0 2.09.55 4.08 1.6 5.87L0 24l6.43-1.68a11.87 11.87 0 0 0 5.63 1.43h.01c6.56 0 11.86-5.3 11.86-11.86 0-3.18-1.24-6.16-3.41-8.41Zm-8.46 18.2h-.01a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-3.82 1 1.02-3.72-.24-.38a9.9 9.9 0 0 1-1.54-5.33c0-5.47 4.45-9.92 9.92-9.92 2.65 0 5.14 1.03 7.01 2.9a9.84 9.84 0 0 1 2.91 7.01c0 5.47-4.45 9.92-9.92 9.92Zm5.66-7.42c-.31-.16-1.83-.9-2.12-1.01-.29-.12-.5-.16-.72.16-.21.31-.82 1.01-1 1.22-.18.2-.37.23-.68.08-.31-.16-1.31-.48-2.49-1.54-.92-.82-1.54-1.83-1.72-2.14-.18-.31-.02-.48.14-.63.14-.14.31-.37.47-.56.16-.19.21-.31.31-.52.1-.2.06-.39-.03-.55-.08-.16-.72-1.72-.98-2.36-.26-.63-.52-.54-.72-.55h-.62c-.2 0-.55.08-.84.39-.29.31-1.11 1.08-1.11 2.63 0 1.54 1.14 3.03 1.3 3.23.16.2 2.23 3.4 5.4 4.77.76.33 1.36.52 1.82.67.76.24 1.46.21 2.01.13.61-.09 1.83-.75 2.09-1.47.26-.72.26-1.34.18-1.47-.08-.13-.28-.21-.59-.37Z"/></svg>
+                </ShareItem>
+                <ShareItem label="X" onClick={() => openUrl(`https://x.com/intent/tweet?url=${encodeURIComponent(getShareableUrl(localVideo.videoUrl))}`)}>
+                  <Twitter className="w-6 h-6" />
+                </ShareItem>
+                <ShareItem label="Facebook" onClick={() => openUrl(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareableUrl(localVideo.videoUrl))}`)}>
+                  <Facebook className="w-6 h-6" />
+                </ShareItem>
+                <ShareItem label="Email" onClick={() => openUrl(`mailto:?subject=${encodeURIComponent('Check this video')}&body=${encodeURIComponent(getShareableUrl(localVideo.videoUrl))}`)}>
+                  <Mail className="w-6 h-6" />
+                </ShareItem>
+                <ShareItem label="Copy" onClick={() => copyToClipboard(getShareableUrl(localVideo.videoUrl))}>
+                  <CopyIcon className="w-6 h-6" />
+                </ShareItem>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
+                <input
+                  readOnly
+                  value={getShareableUrl(localVideo.videoUrl)}
+                  className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-200 outline-none"
+                />
+                <button
+                  onClick={() => copyToClipboard(getShareableUrl(localVideo.videoUrl))}
+                  className="px-3 py-1 text-sm rounded-md bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       </div>
