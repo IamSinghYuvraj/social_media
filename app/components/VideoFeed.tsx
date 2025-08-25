@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { IVideo } from "@/models/Video";
 import VideoComponent from "./VideoComponentOptimized";
 
@@ -15,7 +15,10 @@ export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentVideoId = searchParams.get("id");
+  const pathname = usePathname();
+  const queryId = searchParams.get("id");
+  const pathId = pathname?.startsWith("/clips/") ? pathname.split("/clips/")[1]?.split("/")[0] ?? null : null;
+  const currentVideoId = queryId ?? pathId;
   const activeId = currentVideoId ?? videos[0]?._id?.toString() ?? null;
 
   useEffect(() => {
@@ -28,7 +31,8 @@ export default function VideoFeed({ videos, onVideoUpdate }: VideoFeedProps) {
           if (entry.isIntersecting) {
             const id = entry.target.getAttribute("data-id");
             if (id && id !== currentVideoId) {
-              const newUrl = `${window.location.pathname}?id=${id}`;
+              const onClips = window.location.pathname.startsWith("/clips");
+              const newUrl = onClips ? `/clips/${id}` : `${window.location.pathname}?id=${id}`;
               router.replace(newUrl, { scroll: false });
             }
           }

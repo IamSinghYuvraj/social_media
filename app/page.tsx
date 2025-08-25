@@ -19,7 +19,9 @@ export default function Home() {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiClient.getVideos();
+        const data = session
+          ? await apiClient.getFollowingFeed()
+          : await apiClient.getVideos();
         setVideos(data);
       } catch (error) {
         console.error("Error fetching videos:", error);
@@ -32,7 +34,7 @@ export default function Home() {
     if (status !== "loading") {
       fetchVideos();
     }
-  }, [status]);
+  }, [status, session]);
 
   const handleVideoUpdate = (updatedVideo: IVideo) => {
     setVideos(prevVideos =>
@@ -168,18 +170,20 @@ export default function Home() {
           </div>
           
           <h3 className="text-3xl font-bold mb-4 text-white">
-            No videos yet
+            {session ? "No videos from people you follow yet" : "No videos yet"}
           </h3>
           <p className="text-gray-400 text-xl mb-8 max-w-md mx-auto">
-            Be the first to share your amazing content with the community!
+            {session
+              ? "Follow some creators to see their latest videos here. You can also browse all clips."
+              : "Be the first to share your amazing content with the community!"}
           </p>
           
           <Link
-            href="/upload"
+            href={session ? "/clips" : "/upload"}
             className="inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <Upload className="w-6 h-6" />
-            <span>Create Your First Video</span>
+            <span>{session ? "Browse All Clips" : "Create Your First Video"}</span>
           </Link>
         </div>
       </div>

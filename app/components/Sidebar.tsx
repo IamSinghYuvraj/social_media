@@ -77,6 +77,12 @@ export default function Sidebar() {
       icon: Home,
       isActive: pathname === "/",
     },
+    {
+      name: "Clips",
+      href: "/clips",
+      icon: Camera,
+      isActive: pathname.startsWith("/clips"),
+    },
 
     {
       name: "Create",

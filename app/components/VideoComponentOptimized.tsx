@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback, memo, type ReactNode } from "react";
 import { IVideo, IComment } from "@/models/Video";
 import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/api-client";
 import { useNotification } from "./Notification";
@@ -321,7 +322,7 @@ const VideoComponent = memo(function VideoComponent({
   const renderComments = (comments: IComment[]) => {
     return comments.map((comment) => (
       <div key={safeId(comment)} className="flex space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <Link href={`/user/${comment.userId}`} className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {comment.userProfilePicture ? (
             <Image 
               src={comment.userProfilePicture} 
@@ -334,12 +335,12 @@ const VideoComponent = memo(function VideoComponent({
           ) : (
             <User className="text-white w-4 h-4" />
           )}
-        </div>
+        </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <p className="font-medium text-gray-900 dark:text-white text-sm">
+            <Link href={`/user/${comment.userId}`} className="font-medium text-gray-900 dark:text-white text-sm hover:underline">
               {getUsernameFromEmail(comment.userEmail)}
-            </p>
+            </Link>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {formatTimeAgo(comment.createdAt)}
             </p>
@@ -538,12 +539,18 @@ const VideoComponent = memo(function VideoComponent({
         <div className="flex items-end">
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
-                <User className="text-white w-4 h-4" />
-              </div>
-              <span className="text-white font-medium text-sm">
-                @{getUsernameFromEmail(localVideo.userEmail)}
-              </span>
+              <Link href={`/user/${localVideo.userId}`} className="flex items-center space-x-2 group/profile">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                  {localVideo.userProfilePicture ? (
+                    <Image src={localVideo.userProfilePicture} alt="profile" width={32} height={32} className="w-full h-full object-cover" unoptimized />
+                  ) : (
+                    <User className="text-white w-4 h-4" />
+                  )}
+                </div>
+                <span className="text-white font-medium text-sm hover:underline">
+                  @{getUsernameFromEmail(localVideo.userEmail)}
+                </span>
+              </Link>
               <span className="text-gray-300 text-xs">
                 {formatTimeAgo(localVideo.createdAt)}
               </span>

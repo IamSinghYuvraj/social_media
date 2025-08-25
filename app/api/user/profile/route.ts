@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -17,7 +17,7 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const user = await User.findOne({ email: session.user.email }).select('username profilePicture email');
+    const user = await User.findById(session.user.id).select('username profilePicture email');
     
     if (!user) {
       return NextResponse.json(

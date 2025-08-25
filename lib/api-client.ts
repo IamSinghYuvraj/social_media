@@ -37,6 +37,10 @@ class ApiClient {
     return this.fetch<IVideo[]>("/videos");
   }
 
+  async getFollowingFeed() {
+    return this.fetch<IVideo[]>("/feed/following");
+  }
+
   async getVideo(id: string) {
     return this.fetch<IVideo>(`/videos/${id}`);
   }
@@ -82,6 +86,27 @@ class ApiClient {
 
   async getBookmarkedVideos() {
     return this.fetch<IVideo[]>(`/videos/bookmarked`);
+  }
+
+  async getPublicProfile(userId: string) {
+    return this.fetch<{
+      _id: string;
+      username: string;
+      email: string;
+      profilePicture: string | null;
+      followersCount: number;
+      followingCount: number;
+      videosCount: number;
+      isFollowing: boolean;
+    }>(`/user/${userId}`);
+  }
+
+  async toggleFollow(userId: string) {
+    return this.fetch<{
+      isFollowing: boolean;
+      followersCount: number;
+      followingCount: number;
+    }>(`/user/${userId}/follow`, { method: "POST" });
   }
 
   async deleteVideo(videoId: string) {

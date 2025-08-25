@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Home, Search, Plus, Heart, User } from "lucide-react";
+import { Home, Plus, Heart, User } from "lucide-react";
 
 export default function BottomNavigation() {
   const pathname = usePathname();
@@ -33,10 +33,10 @@ export default function BottomNavigation() {
       active: pathname === "/"
     },
     {
-      href: "/search",
-      icon: Search,
-      label: "Discover",
-      active: pathname === "/search"
+      href: "/clips",
+      icon: Home,
+      label: "Clips",
+      active: pathname === "/clips"
     },
     {
       href: "/upload",

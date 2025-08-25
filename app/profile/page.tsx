@@ -276,7 +276,7 @@ export default function ProfilePage() {
                 {videos.map((video) => (
                   <Link
                     key={video._id?.toString()}
-                    href={`/video/${video._id}`}
+                    href={`/clips/${video._id}`}
                     className="profile-video-card group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
                   >
                     {/* Delete Button */}
@@ -379,7 +379,7 @@ export default function ProfilePage() {
                 {bookmarkedVideos.map((video) => (
                   <Link
                     key={video._id?.toString()}
-                    href={`/video/${video._id}`}
+                    href={`/clips/${video._id}`}
                     className="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden shadow-modern hover:shadow-modern-lg transition-all duration-300 hover:scale-[1.02] block"
                   >
                     {/* Video Thumbnail */}

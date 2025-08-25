@@ -7,6 +7,8 @@ export interface IUser {
     username: string;
     profilePicture?: string;
     bookmarks?: string[];
+    followers?: string[]; // userIds who follow this user
+    following?: string[]; // userIds this user follows
     stats?: {
         videosPosted: number;
         totalLikes: number;
@@ -25,6 +27,8 @@ const userSchema = new Schema<IUser>(
         username: {type: String, required: true, unique: true, minlength: 3, maxlength: 30},
         profilePicture: {type: String},
         bookmarks: [{ type: String }],
+        followers: [{ type: String }],
+        following: [{ type: String }],
         stats: {
             videosPosted: {type: Number, default: 0},
             totalLikes: {type: Number, default: 0},
