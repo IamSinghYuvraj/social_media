@@ -356,8 +356,8 @@ const VideoComponent = memo(function VideoComponent({
 
   if (!localVideo.videoUrl) {
     return (
-      <div className="flex justify-center items-center bg-black relative h-screen">
-        <div className="relative aspect-[9/16] h-full max-h-screen w-full max-w-[min(100vw,calc(100vh*9/16))] sm:max-w-[420px] rounded-xl overflow-hidden shadow-xl bg-gray-800 flex items-center justify-center">
+      <div className="flex justify-center items-center bg-black relative h-[100dvh]">
+        <div className="relative aspect-[9/16] h-full max-h-[100dvh] w-full max-w-[min(100vw,calc(100dvh*9/16))] sm:max-w-[420px] md:max-w-[480px] rounded-none md:rounded-2xl overflow-hidden shadow-xl bg-gray-800 flex items-center justify-center">
           <div className="text-white text-center">
             <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Play className="w-8 h-8" />
@@ -487,8 +487,8 @@ const VideoComponent = memo(function VideoComponent({
   }
 
   return (
-    <div className="relative h-screen w-full bg-black flex items-center justify-center">
-      <div className="relative aspect-[9/16] h-full max-h-screen w-full max-w-[min(100vw,calc(100vh*9/16))] sm:max-w-[420px] overflow-hidden rounded-xl">
+    <div className="relative h-[100dvh] w-full bg-black flex items-center justify-center">
+      <div className="relative aspect-[9/16] h-full max-h-[100dvh] w-full max-w-[min(100vw,calc(100dvh*9/16))] sm:max-w-[420px] md:max-w-[480px] overflow-hidden rounded-none md:rounded-2xl">
       {/* Video element */}
       <video
         ref={videoRef}
