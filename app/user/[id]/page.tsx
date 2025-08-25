@@ -201,7 +201,7 @@ export default function PublicProfilePage() {
                   No videos yet
                 </h3>
                 {!isMe && (
-                  <p className="text-gray-600 dark:text-gray-300">This user hasn't posted any videos yet.</p>
+                  <p className="text-gray-600 dark:text-gray-300">This user hasn&apos;t posted any videos yet.</p>
                 )}
               </div>
             ) : (
