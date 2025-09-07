@@ -26,12 +26,16 @@ interface VideoComponentProps {
   video: IVideo;
   onVideoUpdate?: (updatedVideo: IVideo) => void;
   isActive?: boolean;
+  isNext?: boolean;
+  isPrevious?: boolean;
 }
 
 const VideoComponent = memo(function VideoComponent({ 
   video, 
   onVideoUpdate = () => {}, 
-  isActive = false 
+  isActive = false,
+  isNext = false,
+  isPrevious = false,
 }: VideoComponentProps) {
   const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -127,15 +131,17 @@ const VideoComponent = memo(function VideoComponent({
     if (!el) return;
 
     if (isActive) {
-      el.preload = 'metadata';
       el.play()
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false));
     } else {
       el.pause();
       setIsPlaying(false);
+      if (!isNext && !isPrevious) {
+        el.currentTime = 0;
+      }
     }
-  }, [isActive]);
+  }, [isActive, isNext, isPrevious]);
 
   const handleLike = useCallback(async () => {
     if (!session?.user) {
@@ -501,6 +507,7 @@ const VideoComponent = memo(function VideoComponent({
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onLoadedData={() => setIsLoading(false)}
+        preload={isActive || isNext || isPrevious ? "auto" : "metadata"}
         onError={(e) => {
           console.error('Video error:', e);
           showNotification('Failed to load video', 'error');

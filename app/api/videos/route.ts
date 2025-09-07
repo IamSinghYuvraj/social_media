@@ -5,11 +5,17 @@ import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
     const videos = await Video.find({})
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
     return NextResponse.json(videos);
   } catch (error) {

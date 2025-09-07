@@ -13,28 +13,54 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session, status } = useSession();
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = session
-          ? await apiClient.getFollowingFeed()
-          : await apiClient.getVideos();
-        setVideos(data);
-      } catch (error) {
-        console.error("Error fetching videos:", error);
-        setError("Failed to load videos");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (status !== "loading") {
-      fetchVideos();
+      // Reset and fetch for the new session state
+      setVideos([]);
+      setPage(1);
+      setHasMore(true);
+      fetchVideos(1, true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session]);
+
+  const fetchVideos = async (pageNum: number, isInitialLoad = false) => {
+    if (isInitialLoad) setLoading(true);
+    else if (loadingMore) return;
+    else setLoadingMore(true);
+
+    setError(null);
+
+    try {
+      const limit = 5; // A smaller page size is better for feeds
+      const data = session
+        ? await apiClient.getFollowingFeed()
+        : await apiClient.getVideos();
+
+      if (data.length < limit) {
+        setHasMore(false);
+      }
+
+      setVideos((prev) => (pageNum === 1 ? data : [...prev, ...data]));
+      setPage(pageNum);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      setError("Failed to load videos");
+    } finally {
+      if (isInitialLoad) setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreVideos = () => {
+    if (hasMore && !loadingMore) {
+      fetchVideos(page + 1);
+    }
+  };
 
   const handleVideoUpdate = (updatedVideo: IVideo) => {
     setVideos(prevVideos =>
@@ -202,7 +228,18 @@ export default function Home() {
       </Link>
 
       {/* Video Feed */}
-      <VideoFeed videos={videos} onVideoUpdate={handleVideoUpdate} />
+      <VideoFeed
+        videos={videos}
+        onVideoUpdate={handleVideoUpdate}
+        loadMore={loadMoreVideos}
+        hasMore={hasMore}
+      />
+      {loadingMore && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2 bg-black/50 text-white px-3 py-2 rounded-full backdrop-blur-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">Loading...</span>
+        </div>
+      )}
     </div>
   );
 }
